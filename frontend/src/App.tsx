@@ -1,28 +1,40 @@
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Home from './pages/Home';
+import Login from './pages/Login';
+import * as SignupModule from './pages/Signup';
+import * as DashboardModule from './pages/Dashboard';
+import * as PlanCreatorModule from './pages/PlanCreator';
+import * as PlanViewModule from './pages/PlanView';
+import * as HostPlanModule from './pages/HostPlan';
+
+const Signup = (SignupModule as any).default;
+const Dashboard = (DashboardModule as any).default;
+const PlanCreator = (PlanCreatorModule as any).default;
+const PlanView = (PlanViewModule as any).default;
+const HostPlan = (HostPlanModule as any).default;
+
 function App() {
   return (
-    <div className="min-h-screen bg-bright-gray">
-      <div className="container mx-auto px-4 py-8">
-        <header className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-jakarta mb-4">alignr</h1>
-          <p className="text-dark-blue-gray text-lg">
-            One link, zero chaos — from idea to done.
-          </p>
-        </header>
-
-        <main className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-lg shadow-lg p-8 border-2 border-wisteria">
-            <h2 className="text-2xl font-semibold text-jakarta mb-4">
-              Welcome to Alignr
-            </h2>
-            <p className="text-dark-blue-gray">
-              Your collaborative event planning platform. Create modular event pages
-              with smart structured blocks for group coordination.
-            </p>
-          </div>
-        </main>
-      </div>
-    </div>
-  )
+    <Router>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        
+        {/* Plan View - Public (no auth required for guests) */}
+        <Route path="/plan/:id" element={<PlanView />} />
+        
+        {/* Protected Routes - Require Authentication */}
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/create" element={<PlanCreator />} />
+        <Route path="/host/:id" element={<HostPlan />} />
+        
+        {/* Catch all - redirect to home */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Router>
+  );
 }
 
-export default App
+export default App;

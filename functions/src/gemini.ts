@@ -24,17 +24,27 @@ Event Name: ${eventName}
 ${eventType ? `Event Type: ${eventType}` : ''}
 ${description ? `Description: ${description}` : ''}
 
-Suggest 3-5 planning blocks from these types: 'time', 'location', 'task', 'note'
+Suggest 3-6 planning blocks from these types: 'time', 'location', 'task', 'note', 'poll', 'rsvp', 'budget'
+
+Block type descriptions:
+- time: Schedule and availability voting
+- location: Venue suggestions and voting
+- task: Task lists or bring-item lists
+- note: General notes and context
+- poll: Multiple-choice polls for quick decisions (food, dress code, etc.)
+- rsvp: Track who's attending and confirmations
+- budget: Track shared costs and split expenses
 
 For each suggestion, provide:
-1. blockType (one of: 'time', 'location', 'task', 'note')
+1. blockType (one of the types above)
 2. title (short descriptive title)
 3. priority (1-5, where 1 is most important)
 4. reason (brief explanation why this block is suggested)
 
 Examples:
-- "Birthday party" → time block (pick a date), location block (venue), task block (bring cake/decorations), note block (RSVP count)
-- "Work meeting" → time block (schedule), location block (meeting room), task block (agenda items), note block (pre-read materials)
+- "Birthday party" → rsvp (track attendance), time (pick a date), location (venue), task (bring cake/decorations), poll (food preferences)
+- "Work meeting" → time (schedule), location (meeting room), task (agenda items), note (pre-read materials)
+- "Group trip" → rsvp (who's going), budget (split costs), time (dates), location (destination), task (packing list)
 
 Return ONLY a valid JSON array of suggestions, no additional text.
 `;
@@ -147,6 +157,36 @@ Return ONLY a JSON array of objects with format: [{ "label": "Time option label"
 For a "${eventName}" event, suggest 3-5 types of suitable locations or venues.
 
 Return ONLY a JSON array of objects with format: [{ "label": "Location type", "description": "Why this works" }]
+`;
+      break;
+
+    case 'poll':
+      prompt = `
+For a "${eventName}" event, suggest 3-5 poll question ideas for quick decisions.
+These should be about optional details like food choices, dress code, activity preferences, etc.
+
+Return ONLY a JSON array of objects with format: [{ "question": "Poll question", "options": ["Option 1", "Option 2", "Option 3"] }]
+`;
+      break;
+
+    case 'rsvp':
+      prompt = `
+For a "${eventName}" event with ${participantCount || 'unknown number of'} participants,
+suggest helpful RSVP tracking fields or questions to ask attendees.
+
+Return ONLY a JSON array of objects with format: [{ "field": "Field name", "description": "Why to collect this" }]
+
+Example: [{ "field": "Dietary restrictions", "description": "Plan meals accordingly" }]
+`;
+      break;
+
+    case 'budget':
+      prompt = `
+For a "${eventName}" event, suggest 4-6 expense categories that might need tracking or splitting.
+
+Return ONLY a JSON array of objects with format: [{ "category": "Expense category", "description": "What this covers" }]
+
+Example: [{ "category": "Transportation", "description": "Gas, rideshares, parking" }]
 `;
       break;
 

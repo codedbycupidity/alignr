@@ -7,6 +7,8 @@ interface AvailabilityHeatmapProps {
   startTime: string;
   endTime: string;
   intervalMinutes?: number;
+  isOrganizer?: boolean;
+  onSelectTimeSlot?: (date: string, startTime: string, endTime: string) => void;
 }
 
 export default function AvailabilityHeatmap({
@@ -14,7 +16,9 @@ export default function AvailabilityHeatmap({
   dates,
   startTime,
   endTime,
-  intervalMinutes = 30
+  intervalMinutes = 30,
+  isOrganizer = false,
+  onSelectTimeSlot
 }: AvailabilityHeatmapProps) {
   // Generate all time slots
   const timeSlots = useMemo(() => {
@@ -144,8 +148,15 @@ export default function AvailabilityHeatmap({
                 return (
                   <div
                     key={dateIndex}
-                    className={`h-6 border border-gray-200 flex items-center justify-center cursor-pointer hover:ring-1 hover:ring-[#7B61FF] transition-all relative group ${colorClass}`}
+                    className={`h-6 border border-gray-200 flex items-center justify-center ${
+                      isOrganizer ? 'cursor-pointer hover:ring-2 hover:ring-[#75619D]' : 'cursor-default hover:ring-1 hover:ring-[#7B61FF]'
+                    } transition-all relative group ${colorClass}`}
                     title={tooltipText}
+                    onClick={() => {
+                      if (isOrganizer && onSelectTimeSlot) {
+                        onSelectTimeSlot(date, slot.startTime, slot.endTime);
+                      }
+                    }}
                   >
                     {count > 0 && (
                       <span className="text-[10px] font-semibold text-white">
@@ -158,9 +169,13 @@ export default function AvailabilityHeatmap({
                         <div>
                           <div className="font-semibold mb-0.5">Available ({count}/{availability.length}):</div>
                           <div>{availableNames.join(', ')}</div>
+                          {isOrganizer && <div className="mt-1 text-[9px] text-gray-300 italic">Click to set as event time</div>}
                         </div>
                       ) : (
-                        'No one available'
+                        <div>
+                          <div>No one available</div>
+                          {isOrganizer && <div className="mt-1 text-[9px] text-gray-300 italic">Click to set as event time</div>}
+                        </div>
                       )}
                       {/* Arrow */}
                       <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px">

@@ -439,6 +439,34 @@ export default function PlanView() {
                 const updatedBlocks = await getBlocks(id);
                 setBlocks(updatedBlocks);
               }}
+              onSelectTimeSlot={async (date, startTime, endTime) => {
+                if (!id) return;
+
+                // Format the date nicely
+                const dateObj = new Date(date + 'T00:00:00');
+                const formattedDate = dateObj.toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                });
+
+                // Format times to 12-hour
+                const formatTime = (time24: string) => {
+                  const [hour, min] = time24.split(':').map(Number);
+                  const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                  const ampm = hour < 12 ? 'AM' : 'PM';
+                  return `${hour12}:${min.toString().padStart(2, '0')} ${ampm}`;
+                };
+
+                const description = `${formattedDate} • ${formatTime(startTime)} - ${formatTime(endTime)}`;
+
+                await updateEvent(id, { description });
+                const updatedEvent = await getEvent(id);
+                if (updatedEvent) {
+                  setEvent(updatedEvent);
+                }
+              }}
             />
           </div>
         </div>

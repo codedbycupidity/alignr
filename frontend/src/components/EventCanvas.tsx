@@ -14,9 +14,10 @@ interface EventCanvasProps {
   onLayoutChange?: (blockId: string, layout: BlockLayout) => void;
   onBlockUpdate?: (blockId: string, updates: Partial<Block>) => void;
   onBlockDelete?: (blockId: string) => void;
+  onSelectTimeSlot?: (date: string, startTime: string, endTime: string) => void;
 }
 
-export default function EventCanvas({ blocks, isOrganizer, currentUserId, onLayoutChange, onBlockUpdate, onBlockDelete }: EventCanvasProps) {
+export default function EventCanvas({ blocks, isOrganizer, currentUserId, onLayoutChange, onBlockUpdate, onBlockDelete, onSelectTimeSlot }: EventCanvasProps) {
   // Build participant name map from TimeBlock availability
   const participantNames = new Map<string, string>();
   blocks.forEach(block => {
@@ -100,6 +101,8 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, onLayo
               startTime={tb.content.startTime || '09:00'}
               endTime={tb.content.endTime || '17:00'}
               intervalMinutes={tb.content.intervalMinutes || 30}
+              isOrganizer={isOrganizer}
+              onSelectTimeSlot={onSelectTimeSlot}
             />
           </div>
         );

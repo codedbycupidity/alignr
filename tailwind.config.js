@@ -7,11 +7,28 @@ export default {
   theme: {
     extend: {
       colors: {
-        jakarta: '#3F2A52',
+        'jakarta': '#3F2A52',
         'dark-blue-gray': '#75619D',
-        wisteria: '#BEAEDB',
+        'wisteria': '#BEAEDB',
         'bright-gray': '#E6EFF7',
         'black-coffee': '#3A2D34',
+        
+        // Keep default colors too
+        purple: {
+          50: '#faf5ff',
+          100: '#f3e8ff',
+          200: '#e9d5ff',
+          300: '#d8b4fe',
+          400: '#c084fc',
+          500: '#a855f7',
+          600: '#9333ea',
+          700: '#7e22ce',
+          800: '#6b21a8',
+          900: '#581c87',
+        },
+      },
+      fontFamily: {
+        sans: ['Inter', 'Poppins', 'sans-serif'],
       },
     },
   },

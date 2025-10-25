@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Calendar, Plus, Users, Clock, CheckCircle2, LogOut, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { getUserEvents, getParticipants } from '../services/events';
+import { getUserEvents, getParticipants, deleteEvent } from '../services/events';
 import type { EventData } from '../services/events';
+import EventCard from '../components/EventCard';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -48,6 +49,23 @@ export default function Dashboard() {
   const handleLogout = async () => {
     await logout();
     navigate('/login');
+  };
+
+  const handleDeleteEvent = async (eventId: string, eventName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (!confirm(`Are you sure you want to delete "${eventName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await deleteEvent(eventId);
+      // Reload events after deletion
+      await loadEvents();
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      alert('Failed to delete event. Please try again.');
+    }
   };
 
   return (
@@ -190,61 +208,13 @@ export default function Dashboard() {
           ) : (
             <div className="divide-y divide-gray-200">
               {events.map((event) => (
-                <div
+                <EventCard
                   key={event.id}
-                  className="px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                  event={event}
+                  participantCount={participantCounts[event.id] || 0}
+                  onDelete={handleDeleteEvent}
                   onClick={() => navigate(`/event/${event.id}`)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-sm font-medium text-gray-900 truncate">
-                          {event.name}
-                        </h3>
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                            event.status === 'finalized'
-                              ? 'bg-gray-100 text-gray-700'
-                              : 'bg-[#BEAEDB]/20 text-[#75619D]'
-                          }`}
-                        >
-                          {event.status === 'finalized' ? 'Completed' : 'Active'}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
-                        <div className="flex items-center gap-1.5">
-                          <Calendar className="w-3.5 h-3.5" />
-                          <span>{event.createdAt?.toDate?.().toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric'
-                          }) || 'No date'}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Users className="w-3.5 h-3.5" />
-                          <span>{participantCounts[event.id] || 0} participants</span>
-                        </div>
-                        {event.eventType && (
-                          <span className="text-gray-400">{event.eventType.replace('_', ' ')}</span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="text-right ml-4 hidden sm:block">
-                      <p className="text-xs text-gray-400 mb-1">
-                        Updated {event.updatedAt?.toDate?.().toLocaleDateString() || 'recently'}
-                      </p>
-                      <Link
-                        to={`/event/${event.id}`}
-                        className="text-sm font-medium text-[#75619D] hover:text-[#75619D]/80 transition-colors"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        View →
-                      </Link>
-                    </div>
-                  </div>
-                </div>
+                />
               ))}
             </div>
           )}

@@ -132,6 +132,26 @@ export async function updateEvent(
   });
 }
 
+// Delete event
+export async function deleteEvent(eventId: string): Promise<void> {
+  const eventRef = doc(db, 'events', eventId);
+
+  // Delete all subcollections first (participants, blocks, etc.)
+  const participantsRef = collection(eventRef, 'participants');
+  const participantsSnap = await getDocs(participantsRef);
+  const participantDeletes = participantsSnap.docs.map(doc => deleteDoc(doc.ref));
+
+  const blocksRef = collection(eventRef, 'blocks');
+  const blocksSnap = await getDocs(blocksRef);
+  const blockDeletes = blocksSnap.docs.map(doc => deleteDoc(doc.ref));
+
+  // Wait for all subcollection deletes
+  await Promise.all([...participantDeletes, ...blockDeletes]);
+
+  // Finally delete the event itself
+  await deleteDoc(eventRef);
+}
+
 // Add participant to event
 export async function addParticipant(
   eventId: string,

@@ -6,4 +6,5 @@ export interface Participant {
   joinedAt: Timestamp;
   isOrganizer: boolean;
   activityScore: number;
+  password?: string;
 }

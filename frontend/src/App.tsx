@@ -24,10 +24,6 @@ function App() {
           <Route path="/plan/:id" element={<PlanView />} />
           <Route path="/host/:id" element={<HostPlan />} />
 
-          {/* Testing & Analytics Routes */}
-          <Route path="/test/gemini" element={<TestGemini />} />
-          <Route path="/test/snowflake" element={<TestSnowflake />} />
-          <Route path="/analytics" element={<Analytics />} />
         </Routes>
       </Router>
     </AuthProvider>

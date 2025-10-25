@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Calendar, Users, Share2, CheckCircle2, LogOut } from 'lucide-react';
+import { Calendar, Users, Share2, CheckCircle2, LogOut, LogIn } from 'lucide-react';
 
 interface EventNavbarProps {
   eventId: string;
@@ -62,7 +62,7 @@ export default function EventNavbar({
               </>
             )}
           </button>
-          {isLoggedIn && (
+          {isLoggedIn ? (
             <button
               onClick={onLogout}
               className="flex items-center space-x-2 px-4 py-2.5 bg-white/60 backdrop-blur-sm border border-gray-300 text-gray-700 hover:bg-white/80 hover:border-gray-400 rounded-lg transition-all duration-300 text-sm font-medium shadow-sm"
@@ -70,6 +70,14 @@ export default function EventNavbar({
               <LogOut className="w-4 h-4" strokeWidth={2} />
               <span>Logout</span>
             </button>
+          ) : (
+            <Link
+              to="/auth"
+              className="flex items-center space-x-2 px-4 py-2.5 bg-white/60 backdrop-blur-sm border border-[#75619D]/30 text-[#75619D] hover:bg-white/80 hover:border-[#75619D]/50 rounded-lg transition-all duration-300 text-sm font-medium shadow-sm"
+            >
+              <LogIn className="w-4 h-4" strokeWidth={2} />
+              <span>Login</span>
+            </Link>
           )}
         </div>
       </div>

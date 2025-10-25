@@ -50,7 +50,7 @@ Return ONLY a valid JSON array of suggestions, no additional text.
 `;
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
@@ -106,7 +106,7 @@ Return ONLY the category name, nothing else.
 `;
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text().trim().toLowerCase();
@@ -204,7 +204,7 @@ Example: [{ "category": "Transportation", "description": "Gas, rideshares, parki
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();

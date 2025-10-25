@@ -1,17 +1,31 @@
 import { useState, useCallback } from 'react';
 import GridLayout, { Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
-import type { Block, TimeBlock, BlockLayout } from '../types/block';
+import type { Block, TimeBlock, LocationBlock, BlockLayout } from '../types/block';
 import AvailabilityHeatmap from './AvailabilityHeatmap';
+import LocationBlock from './LocationBlock';
 import { GripVertical } from 'lucide-react';
 
 interface EventCanvasProps {
   blocks: Block[];
   isOrganizer: boolean;
+  currentUserId?: string;
   onLayoutChange?: (blockId: string, layout: BlockLayout) => void;
+  onBlockUpdate?: (blockId: string, updates: Partial<Block>) => void;
 }
 
-export default function EventCanvas({ blocks, isOrganizer, onLayoutChange }: EventCanvasProps) {
+export default function EventCanvas({ blocks, isOrganizer, currentUserId, onLayoutChange, onBlockUpdate }: EventCanvasProps) {
+  // Build participant name map from TimeBlock availability
+  const participantNames = new Map<string, string>();
+  blocks.forEach(block => {
+    if (block.type === 'time') {
+      const tb = block as TimeBlock;
+      tb.content.availability?.forEach(participant => {
+        participantNames.set(participant.participantId, participant.participantName);
+      });
+    }
+  });
+
   // Convert blocks to react-grid-layout format
   const layout: Layout[] = blocks.map(block => ({
     i: block.id,
@@ -83,6 +97,32 @@ export default function EventCanvas({ blocks, isOrganizer, onLayoutChange }: Eve
             startTime={tb.content.startTime || '09:00'}
             endTime={tb.content.endTime || '17:00'}
             intervalMinutes={tb.content.intervalMinutes || 30}
+          />
+        </div>
+      );
+    }
+
+    // Render LocationBlock
+    if (block.type === 'location') {
+      const lb = block as LocationBlock;
+      return (
+        <div className="h-full overflow-auto">
+          <LocationBlock
+            options={lb.content.options}
+            editable={isOrganizer}
+            currentUserId={currentUserId}
+            participantNames={participantNames}
+            allowParticipantSuggestions={lb.content.allowParticipantSuggestions ?? true}
+            onOptionsChange={(options) => {
+              onBlockUpdate?.(block.id, {
+                content: { ...lb.content, options }
+              });
+            }}
+            onSettingsChange={(settings) => {
+              onBlockUpdate?.(block.id, {
+                content: { ...lb.content, ...settings }
+              });
+            }}
           />
         </div>
       );

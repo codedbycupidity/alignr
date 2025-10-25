@@ -80,6 +80,7 @@ export interface TimeBlock extends Block {
 
 export interface LocationBlockContent {
   options: LocationOption[];
+  allowParticipantSuggestions?: boolean;
 }
 
 export interface LocationOption {

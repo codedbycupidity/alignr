@@ -186,6 +186,9 @@ export default function JoinEvent() {
 
       console.log('✅ Block updated successfully');
 
+      // Store participant ID in localStorage for voting
+      localStorage.setItem(`participant_${eventId}`, participantId);
+
       navigate(`/event/${eventId}`);
     } catch (err) {
       console.error('Error joining event:', err);

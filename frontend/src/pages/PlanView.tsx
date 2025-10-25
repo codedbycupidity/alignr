@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { getEvent, getBlocks, addBlock, updateEvent, updateBlock } from '../services/events';
 import { suggestBlocks, type BlockSuggestion } from '../services/gemini';
 import type { EventData } from '../services/events';
-import type { Block, TimeBlock, TimeBlockContent, BlockLayout } from '../types/block';
+import type { Block, TimeBlock, TimeBlockContent, BlockLayout, LocationBlock } from '../types/block';
 import EventCanvas from '../components/EventCanvas';
 import AddTimeBlockModal from '../components/AddTimeBlockModal';
 import BlockSuggestionsSidebar from '../components/BlockSuggestionsSidebar';
@@ -28,6 +28,16 @@ export default function PlanView() {
   const [draggingSuggestion, setDraggingSuggestion] = useState<BlockSuggestion | null>(null);
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [participantId, setParticipantId] = useState<string | null>(null);
+
+  // Get participant ID from localStorage if user is not logged in
+  useEffect(() => {
+    if (!id || user?.id) return;
+    const storedParticipantId = localStorage.getItem(`participant_${id}`);
+    if (storedParticipantId) {
+      setParticipantId(storedParticipantId);
+    }
+  }, [id, user?.id]);
 
   useEffect(() => {
     if (!id) return;
@@ -315,7 +325,32 @@ export default function PlanView() {
             onDragStart={handleDragStart}
             onDrag={handleDrag}
             onDragEnd={handleDragEnd}
-            onAddBlock={() => setShowTimeBlockModal(true)}
+            onAddBlock={async (blockType) => {
+              if (blockType === 'time') {
+                setShowTimeBlockModal(true);
+              } else if (blockType === 'location') {
+                // Add empty location block
+                const newBlock: LocationBlock = {
+                  id: `block-${Date.now()}`,
+                  type: 'location',
+                  content: {
+                    options: []
+                  },
+                  layout: {
+                    x: 0,
+                    y: blocks.length * 2,
+                    w: 6,
+                    h: 3
+                  }
+                };
+                await addBlock(id!, newBlock);
+                const updatedBlocks = await getBlocks(id!);
+                setBlocks(updatedBlocks);
+              } else {
+                // TODO: Handle other block types
+                console.log('Add block type:', blockType);
+              }
+            }}
           />
         )}
 
@@ -349,7 +384,20 @@ export default function PlanView() {
             <EventCanvas
               blocks={blocks}
               isOrganizer={user?.id === event?.organizerId}
+              currentUserId={user?.id || participantId || undefined}
               onLayoutChange={handleLayoutChange}
+              onBlockUpdate={async (blockId, updates) => {
+                if (!id) return;
+                const blockToUpdate = blocks.find(b => b.id === blockId);
+                if (!blockToUpdate) return;
+
+                const updatedBlock = { ...blockToUpdate, ...updates };
+                await updateBlock(id, blockId, updatedBlock);
+
+                // Reload blocks
+                const updatedBlocks = await getBlocks(id);
+                setBlocks(updatedBlocks);
+              }}
             />
           </div>
         </div>

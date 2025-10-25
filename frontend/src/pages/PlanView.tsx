@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { getEvent, getBlocks, addBlock, updateEvent, updateBlock, deleteBlock, getParticipants } from '../services/events';
 import { suggestBlocks, type BlockSuggestion } from '../services/gemini';
 import type { EventData } from '../services/events';
-import type { Block, TimeBlock, TimeBlockContent, BlockLayout, LocationBlock } from '../types/block';
+import type { Block, TimeBlock, TimeBlockContent, BlockLayout, LocationBlock, BudgetBlock } from '../types/block';
 import EventCanvas from '../components/EventCanvas';
 import AddTimeBlockModal from '../components/AddTimeBlockModal';
 import BlockSuggestionsSidebar from '../components/BlockSuggestionsSidebar';
@@ -365,6 +365,24 @@ export default function PlanView() {
                     x: 0,
                     y: blocks.length * 2,
                     w: 6,
+                    h: 3
+                  }
+                };
+                await addBlock(id!, newBlock);
+                const updatedBlocks = await getBlocks(id!);
+                setBlocks(updatedBlocks);
+              } else if (blockType === 'budget') {
+                // Add empty budget block
+                const newBlock: BudgetBlock = {
+                  id: `block-${Date.now()}`,
+                  type: 'budget',
+                  content: {
+                    responses: []
+                  },
+                  layout: {
+                    x: 0,
+                    y: blocks.length * 2,
+                    w: 4,
                     h: 3
                   }
                 };

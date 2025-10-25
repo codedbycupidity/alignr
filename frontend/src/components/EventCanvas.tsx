@@ -1,9 +1,10 @@
 import { useState, useCallback } from 'react';
 import GridLayout, { Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
-import type { Block, TimeBlock, LocationBlock, BlockLayout } from '../types/block';
+import type { Block, TimeBlock, LocationBlock, BudgetBlock as BudgetBlockType, BlockLayout } from '../types/block';
 import AvailabilityHeatmap from './AvailabilityHeatmap';
 import LocationBlock from './LocationBlock';
+import BudgetBlock from './BudgetBlock';
 import FixedDateTimeDisplay from './FixedDateTimeDisplay';
 import { GripVertical, X } from 'lucide-react';
 
@@ -143,6 +144,50 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, onLayo
             onSettingsChange={(settings) => {
               onBlockUpdate?.(block.id, {
                 content: { ...lb.content, ...settings }
+              });
+            }}
+          />
+        </div>
+      );
+    }
+
+    // Render BudgetBlock
+    if (block.type === 'budget') {
+      const bb = block as BudgetBlockType;
+      const currentUserName = participantNames.get(currentUserId || '') || 'You';
+
+      return (
+        <div className="h-full overflow-auto">
+          <BudgetBlock
+            responses={bb.content.responses || []}
+            currentUserId={currentUserId}
+            currentUserName={currentUserName}
+            isOrganizer={isOrganizer}
+            showResponsesToParticipants={bb.content.showResponsesToParticipants ?? false}
+            onResponseChange={(budgetLevel) => {
+              if (!currentUserId) return;
+
+              const otherResponses = (bb.content.responses || []).filter(
+                r => r.participantId !== currentUserId
+              );
+
+              const updatedResponses = [
+                ...otherResponses,
+                {
+                  participantId: currentUserId,
+                  participantName: currentUserName,
+                  budgetLevel,
+                  submittedAt: new Date() as any
+                }
+              ];
+
+              onBlockUpdate?.(block.id, {
+                content: { ...bb.content, responses: updatedResponses }
+              });
+            }}
+            onSettingsChange={(settings) => {
+              onBlockUpdate?.(block.id, {
+                content: { ...bb.content, ...settings }
               });
             }}
           />

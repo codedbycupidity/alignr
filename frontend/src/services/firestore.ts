@@ -20,13 +20,20 @@ import type { User, Event, Participant, Block, EventAnalytics } from '../types';
 // USERS COLLECTION
 // ========================================
 
-export const createUser = async (userId: string, email: string): Promise<void> => {
+export const createUser = async (userId: string, email: string, name?: string): Promise<void> => {
   const userRef = doc(db, 'users', userId);
-  await setDoc(userRef, {
+
+  const userData: any = {
     email,
     createdAt: Timestamp.now(),
     eventIds: [],
-  });
+  };
+
+  if (name) {
+    userData.name = name;
+  }
+
+  await setDoc(userRef, userData, { merge: true });
 };
 
 export const getUser = async (userId: string): Promise<User | null> => {

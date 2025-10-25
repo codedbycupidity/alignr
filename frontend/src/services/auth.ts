@@ -1,28 +1,63 @@
 import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
+  signInWithPhoneNumber,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   User as FirebaseUser,
+  RecaptchaVerifier,
+  ConfirmationResult,
+  ApplicationVerifier,
 } from 'firebase/auth';
 import { auth } from '../config/firebase';
-import { createUser } from './firestore';
+import { createUser, getUser } from './firestore';
 
-// Sign up new organizer
-export const signUp = async (email: string, password: string): Promise<FirebaseUser> => {
-  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-  const user = userCredential.user;
-
-  // Create user document in Firestore
-  await createUser(user.uid, email);
-
-  return user;
+// Setup reCAPTCHA verifier
+export const setupRecaptcha = (containerId: string): RecaptchaVerifier => {
+  const recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
+    size: 'invisible',
+    callback: () => {
+      // reCAPTCHA solved, allow sign in
+      console.log('reCAPTCHA verified');
+    },
+    'expired-callback': () => {
+      // Response expired, ask user to solve reCAPTCHA again
+      console.log('reCAPTCHA expired');
+    }
+  });
+  return recaptchaVerifier;
 };
 
-// Sign in existing organizer
-export const signIn = async (email: string, password: string): Promise<FirebaseUser> => {
-  const userCredential = await signInWithEmailAndPassword(auth, email, password);
-  return userCredential.user;
+// Send verification code to phone number
+export const sendVerificationCode = async (
+  phoneNumber: string,
+  recaptchaVerifier: ApplicationVerifier
+): Promise<ConfirmationResult> => {
+  const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier);
+  return confirmationResult;
+};
+
+// Verify code and sign in
+export const verifyCode = async (
+  confirmationResult: ConfirmationResult,
+  code: string,
+  name?: string
+): Promise<{ user: FirebaseUser; isNewUser: boolean }> => {
+  const userCredential = await confirmationResult.confirm(code);
+  const user = userCredential.user;
+  const phoneNumber = user.phoneNumber || '';
+
+  // Check if user already exists in Firestore
+  const existingUser = await getUser(user.uid);
+  const isNewUser = !existingUser || !existingUser.name;
+
+  // Only create/update user document if new user with name
+  if (isNewUser && name) {
+    await createUser(user.uid, phoneNumber, name);
+  } else if (!existingUser) {
+    // Create user document without name for now (will be added later)
+    await createUser(user.uid, phoneNumber);
+  }
+
+  return { user, isNewUser };
 };
 
 // Sign out

@@ -1,61 +1,83 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Calendar, Mail, Lock, AlertCircle } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Calendar, AlertCircle, Loader2, ArrowRight } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
-
-type TabType = 'login' | 'signup';
 
 export default function Auth() {
   const navigate = useNavigate();
-  const { login, signup } = useAuth();
-  const [activeTab, setActiveTab] = useState<TabType>('login');
+  const { sendCode, confirmCode, user } = useAuth();
 
-  // Login state
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [loginError, setLoginError] = useState('');
-  const [loginLoading, setLoginLoading] = useState(false);
+  const [name, setName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [step, setStep] = useState<'phone' | 'code' | 'name'>('phone');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [isNewUser, setIsNewUser] = useState(false);
 
-  // Signup state
-  const [signupEmail, setSignupEmail] = useState('');
-  const [signupPassword, setSignupPassword] = useState('');
-  const [signupError, setSignupError] = useState('');
-  const [signupLoading, setSignupLoading] = useState(false);
-
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoginError('');
-    setLoginLoading(true);
+    setError('');
+    setLoading(true);
 
     try {
-      await login(loginEmail, loginPassword);
-      navigate('/dashboard');
+      // Format phone number to E.164 format (e.g., +1234567890)
+      // Remove all non-digit characters
+      const digitsOnly = phoneNumber.replace(/\D/g, '');
+
+      // Add +1 country code if not present
+      const formattedPhone = digitsOnly.startsWith('1') && digitsOnly.length === 11
+        ? `+${digitsOnly}`
+        : `+1${digitsOnly}`;
+
+      await sendCode(formattedPhone);
+      setStep('code');
     } catch (err: any) {
-      setLoginError(err.message || 'Failed to log in. Please try again.');
+      setError(err.message || 'Failed to send verification code. Please try again.');
     } finally {
-      setLoginLoading(false);
+      setLoading(false);
     }
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSignupError('');
-
-    if (signupPassword.length < 8) {
-      setSignupError('Password must be at least 8 characters');
-      return;
-    }
-
-    setSignupLoading(true);
+    setError('');
+    setLoading(true);
 
     try {
-      await signup(signupEmail, signupPassword);
+      const result = await confirmCode(verificationCode);
+
+      // Check if this is a new user (no name stored yet)
+      if (result.isNewUser) {
+        setIsNewUser(true);
+        setStep('name');
+      } else {
+        navigate('/dashboard');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Invalid verification code. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmitName = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      // Save the name to Firestore - user is already authenticated
+      if (user?.id) {
+        const { createUser } = await import('../services/firestore');
+        await createUser(user.id, user.email || '', name);
+      }
       navigate('/dashboard');
     } catch (err: any) {
-      setSignupError(err.message || 'Failed to create account. Please try again.');
+      setError(err.message || 'Failed to save your name. Please try again.');
     } finally {
-      setSignupLoading(false);
+      setLoading(false);
     }
   };
 
@@ -72,209 +94,188 @@ export default function Auth() {
             <span className="text-2xl font-semibold text-[#75619D]">Alignr</span>
           </Link>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            {activeTab === 'login' ? 'Welcome back' : 'Create your account'}
+            {step === 'phone' ? 'Sign in with phone' : step === 'code' ? 'Enter verification code' : 'What\'s your name?'}
           </h1>
           <p className="text-sm text-gray-500">
-            {activeTab === 'login' ? 'Log in to manage your plans' : 'Start planning events in seconds'}
+            {step === 'phone'
+              ? 'Enter your phone number to get started'
+              : step === 'code'
+              ? `We sent a code to ${phoneNumber}`
+              : 'Let us know what to call you'}
           </p>
         </div>
 
-        {/* Auth card with tabs */}
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        {/* Auth card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="bg-white border border-gray-200 rounded-lg overflow-hidden"
+        >
+          <div className="p-6">
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
 
-          {/* Tabs */}
-          <div className="border-b border-gray-200 relative">
-            <div className="flex">
-              <button
-                onClick={() => setActiveTab('login')}
-                className={`
-                  relative flex-1 py-3 px-4 text-sm font-medium transition-colors
-                  ${activeTab === 'login'
-                    ? 'text-[#75619D]'
-                    : 'text-gray-500 hover:text-gray-700'
-                  }
-                `}
-              >
-                Login
-              </button>
-              <button
-                onClick={() => setActiveTab('signup')}
-                className={`
-                  relative flex-1 py-3 px-4 text-sm font-medium transition-colors
-                  ${activeTab === 'signup'
-                    ? 'text-[#75619D]'
-                    : 'text-gray-500 hover:text-gray-700'
-                  }
-                `}
-              >
-                Sign up
-              </button>
-            </div>
+            {step === 'phone' ? (
+              <form onSubmit={handleSendCode} className="space-y-4">
+                {/* Phone Number input */}
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Phone Number
+                  </label>
+                  <input
+                    id="phone"
+                    type="tel"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm
+                      placeholder:text-gray-400
+                      focus:outline-none focus:ring-2 focus:ring-[#75619D] focus:border-transparent
+                      transition-colors"
+                    placeholder="3212308763"
+                    required
+                  />
+                  <p className="mt-1.5 text-xs text-gray-500">
+                    Enter 10-digit US phone number
+                  </p>
+                </div>
 
-            {/* Animated underline */}
-            <motion.div
-              className="absolute bottom-0 h-0.5 bg-[#75619D]"
-              layoutId="underline"
-              initial={false}
-              animate={{
-                left: activeTab === 'login' ? '0%' : '50%',
-                width: '50%'
-              }}
-              transition={{
-                type: 'spring',
-                stiffness: 300,
-                damping: 30
-              }}
-            />
-          </div>
+                {/* reCAPTCHA container */}
+                <div id="recaptcha-container"></div>
 
-          {/* Tab content */}
-          <div className="p-6 overflow-hidden">
-            <AnimatePresence mode="wait" initial={false}>
-              {/* Login tab */}
-              {activeTab === 'login' && (
-                <motion.div
-                  key="login"
-                  initial={{ x: -20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  exit={{ x: 20, opacity: 0 }}
-                  transition={{ duration: 0.2, ease: 'easeInOut' }}
+                {/* Submit button */}
+                <button
+                  type="submit"
+                  disabled={loading || !phoneNumber.trim()}
+                  className="w-full bg-[#75619D] text-white py-2 px-4 rounded-md text-sm font-medium
+                    hover:bg-[#75619D]/90
+                    transition-colors
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                    flex items-center justify-center gap-2"
                 >
-                {loginError && (
-                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-start gap-2">
-                    <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-red-600">{loginError}</p>
-                  </div>
-                )}
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Sending code...
+                    </>
+                  ) : (
+                    <>
+                      Send verification code
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
 
-                <form onSubmit={handleLogin} className="space-y-4">
-
-                  {/* Email input */}
-                  <div>
-                    <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Email
-                    </label>
-                    <input
-                      id="login-email"
-                      type="email"
-                      value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
-                      className="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm
-                        placeholder:text-gray-400
-                        focus:outline-none focus:ring-2 focus:ring-[#75619D] focus:border-transparent
-                        transition-colors"
-                      placeholder="you@example.com"
-                      required
-                    />
-                  </div>
-
-                  {/* Password input */}
-                  <div>
-                    <label htmlFor="login-password" className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Password
-                    </label>
-                    <input
-                      id="login-password"
-                      type="password"
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      className="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm
-                        placeholder:text-gray-400
-                        focus:outline-none focus:ring-2 focus:ring-[#75619D] focus:border-transparent
-                        transition-colors"
-                      placeholder="••••••••"
-                      required
-                    />
-                  </div>
-
-                  {/* Submit button */}
-                  <button
-                    type="submit"
-                    disabled={loginLoading}
-                    className="w-full bg-[#75619D] text-white py-2 px-4 rounded-md text-sm font-medium
-                      hover:bg-[#75619D]/90
+              </form>
+            ) : step === 'code' ? (
+              <form onSubmit={handleVerifyCode} className="space-y-4">
+                {/* Verification Code input */}
+                <div>
+                  <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Verification Code
+                  </label>
+                  <input
+                    id="code"
+                    type="text"
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm
+                      placeholder:text-gray-400
+                      focus:outline-none focus:ring-2 focus:ring-[#75619D] focus:border-transparent
                       transition-colors
-                      disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loginLoading ? 'Logging in...' : 'Log In'}
-                  </button>
-                </form>
-                </motion.div>
-              )}
+                      text-center text-lg tracking-widest"
+                    placeholder="123456"
+                    maxLength={6}
+                    required
+                    autoFocus
+                  />
+                </div>
 
-              {/* Signup tab */}
-              {activeTab === 'signup' && (
-                <motion.div
-                  key="signup"
-                  initial={{ x: 20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  exit={{ x: -20, opacity: 0 }}
-                  transition={{ duration: 0.2, ease: 'easeInOut' }}
+                {/* Submit button */}
+                <button
+                  type="submit"
+                  disabled={loading || verificationCode.length !== 6}
+                  className="w-full bg-[#75619D] text-white py-2 px-4 rounded-md text-sm font-medium
+                    hover:bg-[#75619D]/90
+                    transition-colors
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                    flex items-center justify-center gap-2"
                 >
-                {signupError && (
-                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-start gap-2">
-                    <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-red-600">{signupError}</p>
-                  </div>
-                )}
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Verifying...
+                    </>
+                  ) : (
+                    'Verify & Sign In'
+                  )}
+                </button>
 
-                <form onSubmit={handleSignup} className="space-y-4">
+                {/* Back button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStep('phone');
+                    setVerificationCode('');
+                    setError('');
+                  }}
+                  className="w-full text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  Use a different number
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleSubmitName} className="space-y-4">
+                {/* Name input */}
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Full Name
+                  </label>
+                  <input
+                    id="name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm
+                      placeholder:text-gray-400
+                      focus:outline-none focus:ring-2 focus:ring-[#75619D] focus:border-transparent
+                      transition-colors"
+                    placeholder="John Doe"
+                    required
+                    autoFocus
+                  />
+                </div>
 
-                  {/* Email input */}
-                  <div>
-                    <label htmlFor="signup-email" className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Email
-                    </label>
-                    <input
-                      id="signup-email"
-                      type="email"
-                      value={signupEmail}
-                      onChange={(e) => setSignupEmail(e.target.value)}
-                      className="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm
-                        placeholder:text-gray-400
-                        focus:outline-none focus:ring-2 focus:ring-[#75619D] focus:border-transparent
-                        transition-colors"
-                      placeholder="you@example.com"
-                      required
-                    />
-                  </div>
-
-                  {/* Password input */}
-                  <div>
-                    <label htmlFor="signup-password" className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Password
-                    </label>
-                    <input
-                      id="signup-password"
-                      type="password"
-                      value={signupPassword}
-                      onChange={(e) => setSignupPassword(e.target.value)}
-                      className="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm
-                        placeholder:text-gray-400
-                        focus:outline-none focus:ring-2 focus:ring-[#75619D] focus:border-transparent
-                        transition-colors"
-                      placeholder="At least 8 characters"
-                      required
-                    />
-                  </div>
-
-                  {/* Submit button */}
-                  <button
-                    type="submit"
-                    disabled={signupLoading}
-                    className="w-full bg-[#75619D] text-white py-2 px-4 rounded-md text-sm font-medium
-                      hover:bg-[#75619D]/90
-                      transition-colors
-                      disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {signupLoading ? 'Creating account...' : 'Create Account'}
-                  </button>
-                </form>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                {/* Submit button */}
+                <button
+                  type="submit"
+                  disabled={loading || !name.trim()}
+                  className="w-full bg-[#75619D] text-white py-2 px-4 rounded-md text-sm font-medium
+                    hover:bg-[#75619D]/90
+                    transition-colors
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                    flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      Continue
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
           </div>
-        </div>
+        </motion.div>
 
         {/* Footer text */}
         <p className="mt-6 text-center text-xs text-gray-500">

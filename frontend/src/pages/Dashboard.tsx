@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Calendar, Plus, Users, Clock, CheckCircle2, Settings, LogOut, Loader2 } from 'lucide-react';
+import { Calendar, Plus, Users, Clock, CheckCircle2, LogOut, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { getUserEvents, getParticipants } from '../services/events';
 import type { EventData } from '../services/events';
@@ -10,7 +10,6 @@ export default function Dashboard() {
   const { user, logout } = useAuth();
   const [events, setEvents] = useState<EventData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const [participantCounts, setParticipantCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
@@ -65,41 +64,15 @@ export default function Dashboard() {
               <span className="text-lg font-semibold text-[#75619D]">Alignr</span>
             </Link>
 
-            {/* User menu */}
-            <div className="relative">
+            {/* User section */}
+            <div className="flex items-center gap-3">
               <button
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex items-center space-x-2 hover:bg-gray-100 rounded-md px-3 py-2 transition-colors"
+                onClick={handleLogout}
+                className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
               >
-                <div className="w-8 h-8 bg-[#75619D] rounded-full flex items-center justify-center">
-                  <span className="text-white font-medium text-xs">
-                    {user?.email?.substring(0, 2).toUpperCase() || 'U'}
-                  </span>
-                </div>
-                <span className="text-sm font-medium text-gray-700 hidden sm:block">
-                  {user?.email || 'User'}
-                </span>
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Log out</span>
               </button>
-
-              {/* Dropdown */}
-              {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-10">
-                  <Link
-                    to="/settings"
-                    className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    <Settings className="w-4 h-4" />
-                    <span>Settings</span>
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span>Log Out</span>
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -112,7 +85,7 @@ export default function Dashboard() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-              Plans
+              {user?.name ? `${user.name}'s Plans` : 'Plans'}
             </h1>
             <p className="text-sm text-gray-500 mt-1">
               Manage all your events in one place
@@ -123,7 +96,7 @@ export default function Dashboard() {
             className="mt-4 sm:mt-0 inline-flex items-center gap-2 bg-[#75619D] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#75619D]/90 transition-colors"
           >
             <Plus className="w-4 h-4" />
-            New Plan
+            Create Event
           </Link>
         </div>
 

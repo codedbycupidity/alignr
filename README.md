@@ -2,7 +2,7 @@
 
 > One link, zero chaos — from idea to done.
 
-A collaborative event planning platform that combines the flexibility of Notion with smart group decision-making. Create interactive, living event pages with modular blocks that update in real-time.
+The AI-powered, interactive planning canvas that replaces group chat chaos with one clean, shareable page..
 
 ## ✨ Core Concept
 

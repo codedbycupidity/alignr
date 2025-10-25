@@ -297,3 +297,52 @@ No additional text, just the JSON array.
     };
   }
 });
+
+// ========================================
+// GEMINI: GENERATE EVENT DESCRIPTION
+// ========================================
+
+interface GenerateDescriptionRequest {
+  eventName: string;
+}
+
+export const generateEventDescription = functions.https.onCall(async (data: GenerateDescriptionRequest) => {
+  const { eventName } = data;
+
+  const prompt = `
+You are an event planning assistant. Generate a compelling, friendly event description for this event.
+
+Event Name: ${eventName}
+
+Write a 2-3 sentence description that:
+- Captures the excitement and purpose of the event
+- Is inviting and engaging
+- Includes relevant details that would help participants understand what to expect
+- Uses a warm, conversational tone
+
+Examples:
+- "Team building escape room" → "Join us for an exciting team building experience! Work together to solve puzzles and escape the room within 60 minutes. Great for bonding and problem-solving skills."
+- "Birthday party" → "Come celebrate with us! Join the fun with food, games, and great company. Let's make this birthday one to remember!"
+- "Project kickoff meeting" → "Let's get this project started! Join us to discuss goals, timelines, and responsibilities. This is our chance to align as a team and set ourselves up for success."
+
+Return ONLY the description text, no additional formatting or quotes.
+`;
+
+  try {
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const description = response.text().trim();
+
+    return {
+      success: true,
+      data: description,
+    };
+  } catch (error: any) {
+    console.error('Gemini API error:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to generate event description',
+    };
+  }
+});

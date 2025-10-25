@@ -96,3 +96,26 @@ export async function suggestTasks(eventName: string, eventDescription?: string)
     throw error;
   }
 }
+
+/**
+ * Call Gemini (via Firebase Functions) to generate an event description
+ */
+export async function generateEventDescription(eventName: string): Promise<string> {
+  try {
+    const generateDescriptionFn = httpsCallable(functions, 'generateEventDescription');
+    const result = await generateDescriptionFn({
+      eventName
+    });
+
+    const data = result.data as { success: boolean; data?: string; error?: string };
+
+    if (!data.success || !data.data) {
+      throw new Error(data.error || 'Failed to generate event description');
+    }
+
+    return data.data;
+  } catch (error) {
+    console.error('Error generating event description:', error);
+    throw error;
+  }
+}

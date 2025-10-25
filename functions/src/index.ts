@@ -4,7 +4,7 @@ import { initializeApp } from 'firebase-admin/app';
 initializeApp();
 
 // Export all Gemini functions
-export { suggestBlocks, detectEventType, suggestBlockContent, suggestTasks } from './gemini';
+export { suggestBlocks, detectEventType, suggestBlockContent, suggestTasks, generateEventDescription } from './gemini';
 
 // Export Snowflake Cortex AI function
 export { generateEventInsight } from './snowflake';

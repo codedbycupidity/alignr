@@ -1,6 +1,7 @@
 import { RefObject, useState } from 'react';
-import { Calendar, Users, Check, X, Loader2, Clock, Globe, Edit2 } from 'lucide-react';
+import { Calendar, Users, Check, X, Loader2, Clock, Globe, Edit2, Sparkles } from 'lucide-react';
 import type { TimeBlock } from '../types/block';
+import { generateEventDescription } from '../services/gemini';
 
 interface EditableEventHeaderProps {
   eventName: string;
@@ -42,6 +43,8 @@ export default function EditableEventHeader({
   const [editingDescription, setEditingDescription] = useState(false);
   const [descriptionValue, setDescriptionValue] = useState(eventDescription || '');
   const [savingDescription, setSavingDescription] = useState(false);
+  const [generatingDescription, setGeneratingDescription] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
 
   const handleSaveDescription = async () => {
     if (!onDescriptionSave) return;
@@ -49,6 +52,7 @@ export default function EditableEventHeader({
     try {
       await onDescriptionSave(descriptionValue);
       setEditingDescription(false);
+      setAiSuggestion(null);
     } finally {
       setSavingDescription(false);
     }
@@ -57,6 +61,32 @@ export default function EditableEventHeader({
   const handleCancelDescription = () => {
     setDescriptionValue(eventDescription || '');
     setEditingDescription(false);
+    setAiSuggestion(null);
+  };
+
+  const handleGenerateDescription = async () => {
+    if (!eventName || eventName === 'Untitled Event') return;
+
+    setGeneratingDescription(true);
+    try {
+      const description = await generateEventDescription(eventName);
+      setAiSuggestion(description);
+    } catch (error) {
+      console.error('Error generating description:', error);
+    } finally {
+      setGeneratingDescription(false);
+    }
+  };
+
+  const handleAcceptSuggestion = async () => {
+    if (!aiSuggestion || !onDescriptionSave) return;
+    setSavingDescription(true);
+    try {
+      await onDescriptionSave(aiSuggestion);
+      setAiSuggestion(null);
+    } finally {
+      setSavingDescription(false);
+    }
   };
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr + 'T00:00:00');
@@ -120,6 +150,34 @@ export default function EditableEventHeader({
           {/* Description Section */}
           {!editingName && (
             <div className="mt-2">
+              {/* AI Suggestion */}
+              {aiSuggestion && !eventDescription && isOrganizer && (
+                <div className="mb-2 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                  <div className="flex items-start gap-2 mb-2">
+                    <Sparkles className="w-4 h-4 text-[#75619D] mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-xs font-medium text-[#75619D] mb-1">AI Suggestion</p>
+                      <p className="text-sm text-gray-700">{aiSuggestion}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleAcceptSuggestion}
+                      disabled={savingDescription}
+                      className="flex-1 px-3 py-1.5 bg-[#75619D] text-white text-xs rounded-lg hover:bg-[#624F8A] disabled:opacity-50 transition-colors font-medium"
+                    >
+                      {savingDescription ? 'Saving...' : 'Use This Description'}
+                    </button>
+                    <button
+                      onClick={() => setAiSuggestion(null)}
+                      className="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {editingDescription ? (
                 <div className="flex items-start gap-2">
                   <textarea
@@ -155,20 +213,51 @@ export default function EditableEventHeader({
               ) : (
                 <div className="flex items-start gap-2 group">
                   {eventDescription ? (
-                    <p className="text-sm text-gray-600 flex-1">{eventDescription}</p>
+                    <>
+                      <p
+                        onClick={isOrganizer ? () => setEditingDescription(true) : undefined}
+                        className={`text-sm text-gray-600 flex-1 ${
+                          isOrganizer ? 'cursor-pointer hover:text-gray-800 transition-colors' : ''
+                        }`}
+                      >
+                        {eventDescription}
+                      </p>
+                      {isOrganizer && (
+                        <button
+                          onClick={() => setEditingDescription(true)}
+                          className="p-1 opacity-0 group-hover:opacity-100 hover:bg-gray-100 rounded transition-all"
+                          title="Edit description"
+                        >
+                          <Edit2 className="w-3.5 h-3.5 text-gray-500" />
+                        </button>
+                      )}
+                    </>
                   ) : (
-                    isOrganizer && (
-                      <p className="text-sm text-gray-400 italic flex-1">Add a description...</p>
-                    )
-                  )}
-                  {isOrganizer && (
-                    <button
-                      onClick={() => setEditingDescription(true)}
-                      className="p-1 opacity-0 group-hover:opacity-100 hover:bg-gray-100 rounded transition-all"
-                      title="Edit description"
-                    >
-                      <Edit2 className="w-3.5 h-3.5 text-gray-500" />
-                    </button>
+                    <div className="flex-1 flex items-center gap-2">
+                      {isOrganizer ? (
+                        <>
+                          <p
+                            onClick={() => setEditingDescription(true)}
+                            className="text-sm text-gray-400 italic cursor-pointer hover:text-gray-600 transition-colors"
+                          >
+                            Add a description...
+                          </p>
+                          {!aiSuggestion && (
+                            <button
+                              onClick={handleGenerateDescription}
+                              disabled={generatingDescription}
+                              className="flex items-center gap-1 px-2 py-1 text-xs bg-purple-50 text-[#75619D] rounded hover:bg-purple-100 transition-colors disabled:opacity-50"
+                              title="Click to generate AI description"
+                            >
+                              <Sparkles className="w-3 h-3" />
+                              {generatingDescription ? 'Generating...' : 'AI Suggest'}
+                            </button>
+                          )}
+                        </>
+                      ) : (
+                        <p className="text-sm text-gray-400 italic">No description</p>
+                      )}
+                    </div>
                   )}
                 </div>
               )}

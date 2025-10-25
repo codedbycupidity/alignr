@@ -7,6 +7,9 @@ services:
       - ./frontend/src:/app/frontend/src
       - ./index.html:/app/index.html
       - ./vite.config.ts:/app/vite.config.ts
+      - ./.env:/app/.env
+    env_file:
+      - .env
     environment:
       - NODE_ENV=development
     restart: unless-stopped

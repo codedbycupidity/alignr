@@ -7,8 +7,6 @@ import Dashboard from './pages/Dashboard';
 import PlanCreator from './pages/PlanCreator';
 import PlanView from './pages/PlanView';
 import HostPlan from './pages/HostPlan';
-import TestGemini from './pages/TestGemini';
-import TestSnowflake from './pages/TestSnowflake';
 import Analytics from './pages/Analytics';
 
 function App() {
@@ -21,9 +19,10 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/create" element={<PlanCreator />} />
+          <Route path="/create/:id" element={<PlanCreator />} />
           <Route path="/plan/:id" element={<PlanView />} />
           <Route path="/host/:id" element={<HostPlan />} />
-
+          <Route path="/analytics" element={<Analytics />} />
         </Routes>
       </Router>
     </AuthProvider>

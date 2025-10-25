@@ -55,6 +55,18 @@ export default function PlanCreator() {
     return Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
   };
 
+  // Don't render anything if we're redirecting
+  if (!id) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-[#FAFAFB]">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#7B61FF] mb-4"></div>
+          <p className="text-lg font-semibold text-[#1E1E2F]">Creating your canvas...</p>
+        </div>
+      </div>
+    );
+  }
+
   const handleAddBlock = (type: Block['type']) => {
     const newBlock: Block = {
       id: Date.now(),

@@ -229,3 +229,71 @@ Example: [{ "category": "Transportation", "description": "Gas, rideshares, parki
     };
   }
 });
+
+// ========================================
+// GEMINI: SUGGEST TASKS
+// ========================================
+
+interface SuggestTasksRequest {
+  eventName: string;
+  eventDescription?: string;
+}
+
+export const suggestTasks = functions.https.onCall(async (data: SuggestTasksRequest) => {
+  const { eventName, eventDescription } = data;
+
+  const prompt = `
+You are an event planning assistant. Based on this event, suggest 3 specific tasks that need to be done.
+
+Event Name: ${eventName}
+${eventDescription ? `Description: ${eventDescription}` : ''}
+
+Generate 3 actionable tasks that would help organize this event. Each task should be:
+- Specific and actionable
+- Relevant to the event type
+- Something a participant could claim/complete
+
+For each task, provide:
+1. label (short task title, max 50 chars)
+2. description (brief explanation of what needs to be done)
+
+Examples:
+- "Birthday party" → ["Bring decorations", "Order birthday cake", "Create playlist"]
+- "Work meeting" → ["Prepare presentation slides", "Book conference room", "Send meeting agenda"]
+- "Group trip" → ["Research accommodation options", "Create packing list", "Book transportation"]
+
+Return ONLY a valid JSON array of 3 tasks with this structure:
+[
+  {"label": "Task title", "description": "What needs to be done"},
+  ...
+]
+
+No additional text, just the JSON array.
+`;
+
+  try {
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    // Parse JSON from response
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) {
+      throw new Error('No JSON array found in response');
+    }
+
+    const tasks = JSON.parse(jsonMatch[0]);
+
+    return {
+      success: true,
+      data: tasks,
+    };
+  } catch (error: any) {
+    console.error('Gemini API error:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to generate task suggestions',
+    };
+  }
+});

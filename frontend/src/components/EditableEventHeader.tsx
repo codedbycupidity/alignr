@@ -1,5 +1,5 @@
-import { RefObject } from 'react';
-import { Calendar, Users, Check, X, Loader2, Clock, Globe } from 'lucide-react';
+import { RefObject, useState } from 'react';
+import { Calendar, Users, Check, X, Loader2, Clock, Globe, Edit2 } from 'lucide-react';
 import type { TimeBlock } from '../types/block';
 
 interface EditableEventHeaderProps {
@@ -18,6 +18,7 @@ interface EditableEventHeaderProps {
   onStartEdit: () => void;
   onKeyDown: (e: React.KeyboardEvent) => void;
   onDeleteFixedTimeBlock?: () => void;
+  onDescriptionSave?: (description: string) => void;
 }
 
 export default function EditableEventHeader({
@@ -35,8 +36,28 @@ export default function EditableEventHeader({
   onCancelEdit,
   onStartEdit,
   onKeyDown,
-  onDeleteFixedTimeBlock
+  onDeleteFixedTimeBlock,
+  onDescriptionSave
 }: EditableEventHeaderProps) {
+  const [editingDescription, setEditingDescription] = useState(false);
+  const [descriptionValue, setDescriptionValue] = useState(eventDescription || '');
+  const [savingDescription, setSavingDescription] = useState(false);
+
+  const handleSaveDescription = async () => {
+    if (!onDescriptionSave) return;
+    setSavingDescription(true);
+    try {
+      await onDescriptionSave(descriptionValue);
+      setEditingDescription(false);
+    } finally {
+      setSavingDescription(false);
+    }
+  };
+
+  const handleCancelDescription = () => {
+    setDescriptionValue(eventDescription || '');
+    setEditingDescription(false);
+  };
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr + 'T00:00:00');
     return d.toLocaleDateString('en-US', {
@@ -95,8 +116,63 @@ export default function EditableEventHeader({
               {eventName || 'Loading...'}
             </h1>
           )}
-          {eventDescription && !editingName && (
-            <p className="text-sm text-gray-600 mt-1">{eventDescription}</p>
+
+          {/* Description Section */}
+          {!editingName && (
+            <div className="mt-2">
+              {editingDescription ? (
+                <div className="flex items-start gap-2">
+                  <textarea
+                    value={descriptionValue}
+                    onChange={(e) => setDescriptionValue(e.target.value)}
+                    placeholder="Add a description for your event..."
+                    className="flex-1 text-sm text-gray-600 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#75619D] focus:border-transparent resize-none"
+                    rows={3}
+                    autoFocus
+                  />
+                  <div className="flex flex-col gap-1">
+                    <button
+                      onClick={handleSaveDescription}
+                      disabled={savingDescription}
+                      className="p-1.5 bg-[#75619D] text-white rounded-lg hover:bg-[#624F8A] disabled:opacity-50 transition-colors"
+                      title="Save description"
+                    >
+                      {savingDescription ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Check className="w-4 h-4" />
+                      )}
+                    </button>
+                    <button
+                      onClick={handleCancelDescription}
+                      className="p-1.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                      title="Cancel"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start gap-2 group">
+                  {eventDescription ? (
+                    <p className="text-sm text-gray-600 flex-1">{eventDescription}</p>
+                  ) : (
+                    isOrganizer && (
+                      <p className="text-sm text-gray-400 italic flex-1">Add a description...</p>
+                    )
+                  )}
+                  {isOrganizer && (
+                    <button
+                      onClick={() => setEditingDescription(true)}
+                      className="p-1 opacity-0 group-hover:opacity-100 hover:bg-gray-100 rounded transition-all"
+                      title="Edit description"
+                    >
+                      <Edit2 className="w-3.5 h-3.5 text-gray-500" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>

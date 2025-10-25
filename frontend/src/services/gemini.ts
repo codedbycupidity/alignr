@@ -1,8 +1,7 @@
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '../config/firebase';
 import type { EventData } from './events';
 import type { BlockType } from '../types/block';
-
-const functions = getFunctions();
 
 export interface BlockSuggestion {
   blockType: BlockType;
@@ -66,5 +65,34 @@ export async function suggestBlockContent(blockType: BlockType, eventName: strin
   } catch (error) {
     console.error('Error getting content suggestions:', error);
     return [];
+  }
+}
+
+export interface TaskSuggestion {
+  label: string;
+  description: string;
+}
+
+/**
+ * Call Gemini (via Firebase Functions) to suggest tasks for an event
+ */
+export async function suggestTasks(eventName: string, eventDescription?: string): Promise<TaskSuggestion[]> {
+  try {
+    const suggestTasksFn = httpsCallable(functions, 'suggestTasks');
+    const result = await suggestTasksFn({
+      eventName,
+      eventDescription
+    });
+
+    const data = result.data as { success: boolean; data?: TaskSuggestion[]; error?: string };
+
+    if (!data.success || !data.data) {
+      throw new Error(data.error || 'Failed to get task suggestions');
+    }
+
+    return data.data;
+  } catch (error) {
+    console.error('Error getting task suggestions:', error);
+    throw error;
   }
 }

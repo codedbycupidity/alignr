@@ -1,10 +1,11 @@
 import { useState, useCallback } from 'react';
 import GridLayout, { Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
-import type { Block, TimeBlock, LocationBlock, BudgetBlock as BudgetBlockType, BlockLayout } from '../types/block';
+import type { Block, TimeBlock, LocationBlock, BudgetBlock as BudgetBlockType, TaskBlock as TaskBlockType, BlockLayout } from '../types/block';
 import AvailabilityHeatmap from './AvailabilityHeatmap';
 import LocationBlock from './LocationBlock';
 import BudgetBlock from './BudgetBlock';
+import TaskBlock from './TaskBlock';
 import FixedDateTimeDisplay from './FixedDateTimeDisplay';
 import { GripVertical, X } from 'lucide-react';
 
@@ -195,6 +196,29 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, onLayo
       );
     }
 
+    // Render TaskBlock
+    if (block.type === 'task') {
+      const tb = block as TaskBlockType;
+      const currentUserName = participantNames.get(currentUserId || '') || 'You';
+
+      return (
+        <div className="h-full overflow-auto">
+          <TaskBlock
+            tasks={tb.content.tasks || []}
+            currentUserId={currentUserId}
+            currentUserName={currentUserName}
+            participantNames={participantNames}
+            isOrganizer={isOrganizer}
+            onTasksChange={(tasks) => {
+              onBlockUpdate?.(block.id, {
+                content: { tasks }
+              });
+            }}
+          />
+        </div>
+      );
+    }
+
     // Placeholder for other block types
     return (
       <div className="h-full flex flex-col">
@@ -251,14 +275,15 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, onLayo
             key={block.id}
             className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden hover:border-[#75619D] transition-colors"
           >
-            {isOrganizer && (
-              <div className="bg-gray-50 border-b border-gray-200 px-3 py-2 flex items-center justify-between hover:bg-gray-100 transition-colors">
-                <div className="drag-handle flex items-center gap-2 flex-1 cursor-move">
-                  <GripVertical className="w-4 h-4 text-gray-400" />
-                  <span className="text-xs font-medium text-gray-600">
-                    {block.title || block.type.toUpperCase()}
-                  </span>
-                </div>
+            {/* Block Header */}
+            <div className="bg-gray-50 border-b border-gray-200 px-3 py-2 flex items-center justify-between">
+              <div className={`flex items-center gap-2 flex-1 ${isOrganizer ? 'drag-handle cursor-move hover:bg-gray-100' : ''}`}>
+                {isOrganizer && <GripVertical className="w-4 h-4 text-gray-400" />}
+                <span className="text-xs font-medium text-gray-600">
+                  {block.title || block.type.toUpperCase()}
+                </span>
+              </div>
+              {isOrganizer && (
                 <button
                   onClick={async (e) => {
                     e.preventDefault();
@@ -272,9 +297,9 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, onLayo
                 >
                   <X className="w-4 h-4 text-gray-500 hover:text-gray-700" />
                 </button>
-              </div>
-            )}
-            <div className={`p-4 ${isOrganizer ? 'h-[calc(100%-40px)]' : 'h-full'}`}>
+              )}
+            </div>
+            <div className="p-4 h-[calc(100%-40px)]">
               {renderBlock(block)}
             </div>
           </div>

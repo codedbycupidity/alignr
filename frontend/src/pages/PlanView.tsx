@@ -4,9 +4,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { getEvent, getBlocks, addBlock, updateEvent, updateBlock, deleteBlock, getParticipants } from '../services/events';
 import { suggestBlocks, type BlockSuggestion } from '../services/gemini';
 import type { EventData } from '../services/events';
-import type { Block, TimeBlock, TimeBlockContent, BlockLayout, LocationBlock, BudgetBlock } from '../types/block';
+import type { Block, TimeBlock, TimeBlockContent, BlockLayout, LocationBlock, BudgetBlock, TaskBlock as TaskBlockType, Task } from '../types/block';
 import EventCanvas from '../components/EventCanvas';
 import AddTimeBlockModal from '../components/AddTimeBlockModal';
+import TaskSuggestionsModal from '../components/TaskSuggestionsModal';
 import BlockSuggestionsSidebar from '../components/BlockSuggestionsSidebar';
 import EventNavbar from '../components/EventNavbar';
 import EditableEventHeader from '../components/EditableEventHeader';
@@ -30,6 +31,8 @@ export default function PlanView() {
   const [isDragging, setIsDragging] = useState(false);
   const [participantId, setParticipantId] = useState<string | null>(null);
   const [participantCount, setParticipantCount] = useState(0);
+  const [showTaskSuggestionsModal, setShowTaskSuggestionsModal] = useState(false);
+  const [addingTaskBlock, setAddingTaskBlock] = useState(false);
 
   // Get participant ID from localStorage if user is not logged in
   useEffect(() => {
@@ -236,11 +239,52 @@ export default function PlanView() {
     }
   };
 
-  const handleSuggestionClick = (suggestion: BlockSuggestion) => {
+  const handleSuggestionClick = async (suggestion: BlockSuggestion) => {
     console.log('Clicked suggestion:', suggestion);
+    if (!id) return;
+
     if (suggestion.blockType === 'time') {
       console.log('Opening time block modal');
       setShowTimeBlockModal(true);
+    } else if (suggestion.blockType === 'task') {
+      console.log('Opening task suggestions modal');
+      setShowTaskSuggestionsModal(true);
+    } else if (suggestion.blockType === 'location') {
+      const newBlock: LocationBlock = {
+        id: `block-${Date.now()}`,
+        type: 'location',
+        content: {
+          options: []
+        },
+        layout: {
+          x: 0,
+          y: blocks.length * 2,
+          w: 6,
+          h: 3
+        }
+      };
+      await addBlock(id, newBlock);
+      const updatedBlocks = await getBlocks(id);
+      setBlocks(updatedBlocks);
+      setSuggestions([]);
+    } else if (suggestion.blockType === 'budget') {
+      const newBlock: BudgetBlock = {
+        id: `block-${Date.now()}`,
+        type: 'budget',
+        content: {
+          responses: []
+        },
+        layout: {
+          x: 0,
+          y: blocks.length * 2,
+          w: 4,
+          h: 3
+        }
+      };
+      await addBlock(id, newBlock);
+      const updatedBlocks = await getBlocks(id);
+      setBlocks(updatedBlocks);
+      setSuggestions([]);
     } else {
       alert(`Block type "${suggestion.blockType}" not yet implemented`);
     }
@@ -389,6 +433,9 @@ export default function PlanView() {
                 await addBlock(id!, newBlock);
                 const updatedBlocks = await getBlocks(id!);
                 setBlocks(updatedBlocks);
+              } else if (blockType === 'task') {
+                // Show task suggestions modal
+                setShowTaskSuggestionsModal(true);
               } else {
                 // TODO: Handle other block types
                 console.log('Add block type:', blockType);
@@ -423,6 +470,14 @@ export default function PlanView() {
               await deleteBlock(id, fixedTimeBlock.id);
               const updatedBlocks = await getBlocks(id);
               setBlocks(updatedBlocks);
+            }}
+            onDescriptionSave={async (description: string) => {
+              if (!id) return;
+              await updateEvent(id, { description });
+              const updatedEvent = await getEvent(id);
+              if (updatedEvent) {
+                setEvent(updatedEvent);
+              }
             }}
           />
 
@@ -505,6 +560,69 @@ export default function PlanView() {
           }}
           eventName={event.name}
           isDragging={isDragging && draggingSuggestion !== null}
+        />
+      )}
+
+      {/* Task Suggestions Modal */}
+      {event && (
+        <TaskSuggestionsModal
+          isOpen={showTaskSuggestionsModal}
+          eventName={event.name}
+          eventDescription={event.description}
+          onAccept={async (tasks) => {
+            if (!id || addingTaskBlock) return;
+
+            setAddingTaskBlock(true);
+            try {
+              const newBlock: TaskBlockType = {
+                id: `block-${Date.now()}`,
+                type: 'task',
+                content: {
+                  tasks
+                },
+                layout: {
+                  x: 0,
+                  y: blocks.length * 2,
+                  w: 5,
+                  h: 4
+                }
+              };
+
+              await addBlock(id, newBlock);
+              const updatedBlocks = await getBlocks(id);
+              setBlocks(updatedBlocks);
+              setShowTaskSuggestionsModal(false);
+            } finally {
+              setAddingTaskBlock(false);
+            }
+          }}
+          onSkip={async () => {
+            if (!id || addingTaskBlock) return;
+
+            setAddingTaskBlock(true);
+            try {
+              const newBlock: TaskBlockType = {
+                id: `block-${Date.now()}`,
+                type: 'task',
+                content: {
+                  tasks: []
+                },
+                layout: {
+                  x: 0,
+                  y: blocks.length * 2,
+                  w: 5,
+                  h: 4
+                }
+              };
+
+              await addBlock(id, newBlock);
+              const updatedBlocks = await getBlocks(id);
+              setBlocks(updatedBlocks);
+              setShowTaskSuggestionsModal(false);
+            } finally {
+              setAddingTaskBlock(false);
+            }
+          }}
         />
       )}
     </div>

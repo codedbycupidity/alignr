@@ -32,12 +32,21 @@ When you create an event, Gemini analyzes the type and auto-suggests relevant bl
 - Export finalized plans to Google Calendar
 - Optional calendar API integration (Cronofy) for availability checking
 
+### AI-Powered Event Insights (Snowflake)
+When an event is finalized, aggregated participation data is sent to Snowflake for intelligent analysis:
+- **Participation metrics** — Vote counts, engagement rates, suggestion activity
+- **MVP recognition** — Identifies most active contributors
+- **Engagement insights** — Generated via Snowflake's LLM API
+
+Example insight: *"8 people participated across 3 time slots. Friday at 7 PM won by 5 votes. Mira added 4 new suggestions — she's the MVP planner!"*
+
 ## 🛠 Tech Stack
 
 - **Frontend:** React + TypeScript + Vite
 - **Styling:** Tailwind CSS (custom purple/white theme)
 - **Database:** Firebase (Firestore for real-time updates)
-- **AI:** Google Gemini API
+- **AI:** Google Gemini API (event planning suggestions)
+- **Analytics & Insights:** Snowflake API with LLM (post-event insights)
 - **Calendar APIs:** Google Calendar, Cronofy
 - **Deployment:** Docker + nginx
 
@@ -94,7 +103,7 @@ npm install
 
 # Set up environment variables
 cp .env.example .env
-# Add your Firebase and Gemini API credentials
+# Add your Firebase, Gemini, and Snowflake API credentials
 
 # Start development server
 npm run dev
@@ -108,11 +117,12 @@ docker-compose up
 
 ## 🎯 How It Works
 
-1. **Organizer creates event** → Gets Notion-style canvas with suggested blocks (AI-powered)
+1. **Organizer creates event** → Gets Notion-style canvas with AI-suggested blocks (Gemini)
 2. **Shares link** → Participants join with no login, just a display name
-3. **Collaborative editing** → Everyone votes, suggests options, claims tasks
+3. **Collaborative editing** → Everyone votes, suggests options, claims tasks in real-time
 4. **Auto-summary** → "Current Best Plan" card updates live with most popular choices
-5. **Finalize & sync** → Export to calendars when ready
+5. **Finalize & sync** → Organizer confirms plan, everyone exports to calendars
+6. **Get insights** → Snowflake generates engagement summary and identifies top contributors
 
 ## 🏆 Why alignr?
 

@@ -5,52 +5,47 @@ import {
   Calendar, 
   ArrowLeft, 
   Save, 
-  Share2, 
-  MessageSquare, 
-  Check, 
-  Users, 
-  BarChart3, 
-  Sparkles,
-  Plus
+  Share2,
+  Plus,
+  Lock,
+  Unlock
 } from 'lucide-react';
+
+// Import block system
+import { getBlockTypes, getBlockConfig, createBlock, BlockType } from '../components/BlockRegistry';
+import BlockRenderer from '../components/BlockRenderer';
 
 // Block type definition
 interface Block {
   id: number;
-  type: 'note' | 'checklist' | 'poll' | 'rsvp' | 'gemmi';
+  type: BlockType;
   x: number;
   y: number;
   content?: string;
   items?: string[];
-  options?: { text: string; votes: number }[];
+  options?: { text: string; votes: number; voters: string[] }[];
   people?: string[];
+  editableByAll?: boolean;
 }
-
-// Initial mock blocks
-const initialBlocks: Block[] = [
-  { id: 1, type: 'note', x: 200, y: 150, content: 'Birthday Dinner 🎉' },
-  { id: 2, type: 'checklist', x: 500, y: 200, items: ['Bring cake', 'Book table', 'Send invites'] },
-];
 
 export default function PlanCreator() {
   const navigate = useNavigate();
   const { id } = useParams();
   const [planId, setPlanId] = useState<string>(id || '');
-  const [blocks, setBlocks] = useState<Block[]>(initialBlocks);
+  const [blocks, setBlocks] = useState<Block[]>([]);
   const [eventName, setEventName] = useState('Untitled Event');
   const [isEditingName, setIsEditingName] = useState(false);
+  const [globalEditAccess, setGlobalEditAccess] = useState(false);
 
   // Generate unique plan ID on mount if creating new plan
   useEffect(() => {
     if (!id) {
       const newPlanId = generatePlanId();
       setPlanId(newPlanId);
-      // Redirect to the new plan URL
       navigate(`/create/${newPlanId}`, { replace: true });
     }
   }, [id, navigate]);
 
-  // Generate a unique plan ID
   const generatePlanId = (): string => {
     return Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
   };
@@ -67,23 +62,23 @@ export default function PlanCreator() {
     );
   }
 
-  const handleAddBlock = (type: Block['type']) => {
-    const newBlock: Block = {
-      id: Date.now(),
-      type,
-      x: 150,
-      y: 150,
-      content: type === 'note' ? 'New note...' : type === 'gemmi' ? 'AI insight will appear here' : undefined,
-      items: type === 'checklist' ? ['New task'] : undefined,
-      options: type === 'poll' ? [{ text: 'Option 1', votes: 0 }] : undefined,
-      people: type === 'rsvp' ? [] : undefined,
-    };
+  const handleAddBlock = (type: BlockType) => {
+    const newBlock = createBlock(type, globalEditAccess);
     setBlocks([...blocks, newBlock]);
+  };
+
+  const updateBlock = (blockId: number, updates: Partial<Block>) => {
+    setBlocks(blocks.map(b => b.id === blockId ? { ...b, ...updates } : b));
+  };
+
+  const toggleBlockEditAccess = (blockId: number) => {
+    setBlocks(blocks.map(b => 
+      b.id === blockId ? { ...b, editableByAll: !b.editableByAll } : b
+    ));
   };
 
   const handleSave = () => {
     console.log('Saving plan:', planId, blocks);
-    // TODO: Save to Firebase with planId
     alert('Plan saved! Share this link: ' + window.location.origin + '/plan/' + planId);
   };
 
@@ -91,7 +86,12 @@ export default function PlanCreator() {
     const shareLink = `${window.location.origin}/plan/${planId}`;
     navigator.clipboard.writeText(shareLink);
     alert('Link copied to clipboard!\n\n' + shareLink);
-    console.log('Share link:', shareLink);
+  };
+
+  const toggleGlobalEditAccess = () => {
+    const newValue = !globalEditAccess;
+    setGlobalEditAccess(newValue);
+    setBlocks(blocks.map(b => ({ ...b, editableByAll: newValue })));
   };
 
   return (
@@ -131,6 +131,23 @@ export default function PlanCreator() {
         </div>
 
         <div className="flex items-center space-x-3">
+          {/* 🔥 GLOBAL EDIT ACCESS TOGGLE BUTTON - TOP RIGHT CORNER */}
+          <button
+            onClick={toggleGlobalEditAccess}
+            className={`p-3 rounded-full transition-all duration-300 shadow-md ${
+              globalEditAccess 
+                ? 'bg-[#7B61FF] text-white shadow-[#7B61FF]/50 ring-2 ring-[#7B61FF]/30' 
+                : 'bg-white text-gray-400 hover:bg-gray-50 border border-gray-200'
+            }`}
+            title={globalEditAccess ? 'Public editing enabled - Click to disable' : 'Private mode - Click to enable public editing'}
+          >
+            {globalEditAccess ? (
+              <Unlock className="w-5 h-5" strokeWidth={2.5} />
+            ) : (
+              <Lock className="w-5 h-5" strokeWidth={2.5} />
+            )}
+          </button>
+
           <Link
             to="/dashboard"
             className="flex items-center space-x-2 px-4 py-2 text-[#1E1E2F] hover:bg-gray-50 rounded-lg transition-all duration-300 text-sm font-medium"
@@ -158,42 +175,51 @@ export default function PlanCreator() {
       <div className="flex flex-1 overflow-hidden">
         
         {/* Left sidebar - Toolbox */}
-        <aside className="w-60 bg-white shadow-md border-r border-gray-100 p-6 overflow-y-auto">
+        <aside className="w-64 bg-white shadow-md border-r border-gray-100 p-6 overflow-y-auto">
           <h3 className="text-sm font-bold text-[#1E1E2F] uppercase tracking-wide mb-4">
-            Add to Canvas
+            Add Blocks
           </h3>
           
           <div className="space-y-3">
-            <BlockTemplate 
-              icon={<MessageSquare className="w-4 h-4" strokeWidth={2} />}
-              label="Note"
-              onClick={() => handleAddBlock('note')}
-            />
-            <BlockTemplate 
-              icon={<Check className="w-4 h-4" strokeWidth={2} />}
-              label="Checklist"
-              onClick={() => handleAddBlock('checklist')}
-            />
-            <BlockTemplate 
-              icon={<BarChart3 className="w-4 h-4" strokeWidth={2} />}
-              label="Poll"
-              onClick={() => handleAddBlock('poll')}
-            />
-            <BlockTemplate 
-              icon={<Users className="w-4 h-4" strokeWidth={2} />}
-              label="RSVP List"
-              onClick={() => handleAddBlock('rsvp')}
-            />
-            <BlockTemplate 
-              icon={<Sparkles className="w-4 h-4" strokeWidth={2} />}
-              label="AI Insight"
-              onClick={() => handleAddBlock('gemmi')}
-            />
+            {getBlockTypes().map(type => {
+              const config = getBlockConfig(type);
+              const Icon = config.icon;
+              return (
+                <button
+                  key={type}
+                  onClick={() => handleAddBlock(type)}
+                  className="w-full flex items-center space-x-3 p-3 bg-gray-50 hover:bg-[#F4F0FF] border border-gray-200 hover:border-[#C5B8FF] hover:shadow-lg rounded-lg transition-all duration-300 group"
+                >
+                  <div className="w-9 h-9 bg-white border border-gray-200 group-hover:border-[#7B61FF] rounded-lg flex items-center justify-center transition-all duration-300">
+                    <Icon className="w-4 h-4 text-[#1E1E2F] group-hover:text-[#7B61FF] transition-colors" strokeWidth={2} />
+                  </div>
+                  <span className="text-sm font-medium text-[#1E1E2F] group-hover:text-[#7B61FF] transition-colors">
+                    {config.label}
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
+          <button 
+            className="w-full mt-6 px-4 py-3 bg-gradient-to-r from-[#7B61FF] to-[#A78BFA] text-white rounded-lg font-semibold text-sm shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-2"
+            onClick={() => handleAddBlock('note')}
+          >
+            <Plus className="w-4 h-4" strokeWidth={2.5} />
+            <span>New Block</span>
+          </button>
+
           <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="flex items-center space-x-2 mb-3">
+              <div className={`w-3 h-3 rounded-full transition-colors ${globalEditAccess ? 'bg-[#7B61FF]' : 'bg-gray-300'}`}></div>
+              <p className="text-xs font-semibold text-[#1E1E2F]">
+                {globalEditAccess ? 'Public Edit: ON' : 'Public Edit: OFF'}
+              </p>
+            </div>
             <p className="text-xs text-gray-500 leading-relaxed">
-              Click a block to add it to your canvas. Drag to position anywhere.
+              {globalEditAccess 
+                ? 'Anyone with the link can edit all blocks' 
+                : 'Only you can edit blocks. Click the lock icon above to enable public editing.'}
             </p>
           </div>
         </aside>
@@ -211,12 +237,26 @@ export default function PlanCreator() {
                 ));
               }}
             >
-              <div className="absolute">
-                {block.type === 'note' && <NoteBlock content={block.content || ''} />}
-                {block.type === 'checklist' && <ChecklistBlock items={block.items || []} />}
-                {block.type === 'poll' && <PollBlock options={block.options || []} />}
-                {block.type === 'rsvp' && <RsvpBlock people={block.people || []} />}
-                {block.type === 'gemmi' && <GemmiBlock content={block.content || ''} />}
+              <div className="absolute group">
+                {/* Per-block edit permission toggle */}
+                <button
+                  onClick={() => toggleBlockEditAccess(block.id)}
+                  className={`absolute -top-2 -right-2 z-10 w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 opacity-0 group-hover:opacity-100 ${
+                    block.editableByAll 
+                      ? 'bg-[#7B61FF] text-white shadow-lg' 
+                      : 'bg-white text-gray-400 border border-gray-200'
+                  }`}
+                  title={block.editableByAll ? 'Public editing enabled' : 'Private'}
+                >
+                  {block.editableByAll ? (
+                    <Unlock className="w-3 h-3" strokeWidth={2.5} />
+                  ) : (
+                    <Lock className="w-3 h-3" strokeWidth={2.5} />
+                  )}
+                </button>
+
+                {/* Render the block using BlockRenderer */}
+                <BlockRenderer block={block} onUpdate={updateBlock} />
               </div>
             </Draggable>
           ))}
@@ -235,179 +275,6 @@ export default function PlanCreator() {
           )}
         </main>
       </div>
-    </div>
-  );
-}
-
-// Block template component (sidebar)
-interface BlockTemplateProps {
-  icon: React.ReactNode;
-  label: string;
-  onClick: () => void;
-}
-
-function BlockTemplate({ icon, label, onClick }: BlockTemplateProps) {
-  return (
-    <button
-      onClick={onClick}
-      className="w-full flex items-center space-x-3 p-3 bg-gray-50 hover:bg-[#F4F0FF] border border-gray-200 hover:border-[#C5B8FF] hover:shadow-lg rounded-lg transition-all duration-500 ease-out group"
-    >
-      <div className="w-9 h-9 bg-white border border-gray-200 group-hover:border-[#7B61FF] rounded-lg flex items-center justify-center transition-all duration-300">
-        <div className="text-[#1E1E2F] group-hover:text-[#7B61FF] transition-colors">
-          {icon}
-        </div>
-      </div>
-      <span className="text-sm font-medium text-[#1E1E2F] group-hover:text-[#7B61FF] transition-colors">
-        {label}
-      </span>
-    </button>
-  );
-}
-
-// Note block component
-interface NoteBlockProps {
-  content: string;
-}
-
-function NoteBlock({ content }: NoteBlockProps) {
-  return (
-    <div className="drag-handle p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:border-purple-300 transition-all duration-300 cursor-grab active:cursor-grabbing w-64">
-      <div className="flex items-start space-x-2 mb-2">
-        <MessageSquare className="w-4 h-4 text-[#7B61FF] mt-0.5 flex-shrink-0" strokeWidth={2} />
-        <textarea
-          defaultValue={content}
-          className="flex-1 text-sm text-[#1E1E2F] bg-transparent border-none outline-none resize-none font-medium"
-          rows={3}
-          placeholder="Type your note..."
-        />
-      </div>
-    </div>
-  );
-}
-
-// Checklist block component
-interface ChecklistBlockProps {
-  items: string[];
-}
-
-function ChecklistBlock({ items }: ChecklistBlockProps) {
-  return (
-    <div className="drag-handle p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:border-purple-300 transition-all duration-300 cursor-grab active:cursor-grabbing w-72">
-      <div className="flex items-center space-x-2 mb-3">
-        <Check className="w-4 h-4 text-[#7B61FF]" strokeWidth={2} />
-        <h4 className="text-sm font-semibold text-[#1E1E2F]">Checklist</h4>
-      </div>
-      <div className="space-y-2">
-        {items.map((item: string, index: number) => (
-          <div key={index} className="flex items-center space-x-2">
-            <div className="w-4 h-4 rounded border-2 border-gray-300 hover:border-[#7B61FF] transition-colors cursor-pointer flex-shrink-0"></div>
-            <input
-              type="text"
-              defaultValue={item}
-              className="flex-1 text-sm text-[#1E1E2F] bg-transparent border-none outline-none"
-            />
-          </div>
-        ))}
-      </div>
-      <button className="mt-3 text-xs text-[#7B61FF] hover:text-[#A78BFA] font-medium flex items-center space-x-1 transition-colors">
-        <Plus className="w-3 h-3" strokeWidth={2} />
-        <span>Add item</span>
-      </button>
-    </div>
-  );
-}
-
-// Poll block component
-interface PollBlockProps {
-  options: { text: string; votes: number }[];
-}
-
-function PollBlock({ options }: PollBlockProps) {
-  return (
-    <div className="drag-handle p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:border-purple-300 transition-all duration-300 cursor-grab active:cursor-grabbing w-80">
-      <div className="flex items-center space-x-2 mb-3">
-        <BarChart3 className="w-4 h-4 text-[#7B61FF]" strokeWidth={2} />
-        <h4 className="text-sm font-semibold text-[#1E1E2F]">Poll</h4>
-      </div>
-      <div className="space-y-2">
-        {options.map((option, index) => (
-          <div key={index} className="p-2 bg-gray-50 rounded-lg">
-            <input
-              type="text"
-              defaultValue={option.text}
-              className="w-full text-sm text-[#1E1E2F] bg-transparent border-none outline-none font-medium mb-1"
-            />
-            <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-[#7B61FF] to-[#A78BFA]"
-                style={{ width: `${option.votes}%` }}
-              ></div>
-            </div>
-          </div>
-        ))}
-      </div>
-      <button className="mt-3 text-xs text-[#7B61FF] hover:text-[#A78BFA] font-medium flex items-center space-x-1 transition-colors">
-        <Plus className="w-3 h-3" strokeWidth={2} />
-        <span>Add option</span>
-      </button>
-    </div>
-  );
-}
-
-// RSVP block component
-interface RsvpBlockProps {
-  people: string[];
-}
-
-function RsvpBlock({ people }: RsvpBlockProps) {
-  return (
-    <div className="drag-handle p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:border-purple-300 transition-all duration-300 cursor-grab active:cursor-grabbing w-64">
-      <div className="flex items-center space-x-2 mb-3">
-        <Users className="w-4 h-4 text-[#7B61FF]" strokeWidth={2} />
-        <h4 className="text-sm font-semibold text-[#1E1E2F]">RSVP</h4>
-      </div>
-      <div className="space-y-2">
-        {people.length === 0 ? (
-          <p className="text-xs text-gray-500">No responses yet</p>
-        ) : (
-          people.map((person: string, index: number) => (
-            <div key={index} className="flex items-center space-x-2">
-              <div className="w-6 h-6 bg-gradient-to-br from-[#7B61FF] to-[#A78BFA] rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-xs font-medium">{person[0]}</span>
-              </div>
-              <span className="text-sm text-[#1E1E2F]">{person}</span>
-            </div>
-          ))
-        )}
-      </div>
-      <button className="mt-3 text-xs text-[#7B61FF] hover:text-[#A78BFA] font-medium flex items-center space-x-1 transition-colors">
-        <Plus className="w-3 h-3" strokeWidth={2} />
-        <span>Add person</span>
-      </button>
-    </div>
-  );
-}
-
-// Gemmi AI block component
-interface GemmiBlockProps {
-  content: string;
-}
-
-function GemmiBlock({ content }: GemmiBlockProps) {
-  return (
-    <div className="drag-handle p-4 bg-[#F4F0FF] border border-[#C5B8FF] rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-grab active:cursor-grabbing w-80">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center space-x-2">
-          <Sparkles className="w-4 h-4 text-[#7B61FF]" strokeWidth={2} />
-          <h4 className="text-sm font-semibold text-[#7B61FF]">AI Insight</h4>
-        </div>
-        <button className="p-1 hover:bg-[#E0D4FF] rounded transition-colors">
-          <Sparkles className="w-3 h-3 text-[#7B61FF]" strokeWidth={2} />
-        </button>
-      </div>
-      <p className="text-sm text-[#1E1E2F] leading-relaxed font-medium">
-        {content}
-      </p>
     </div>
   );
 }

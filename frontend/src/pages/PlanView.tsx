@@ -4,8 +4,10 @@ import {
   Calendar,
   Users,
   Share2,
-  CheckCircle2
+  CheckCircle2,
+  Edit
 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 import { getEvent } from '../services/events';
 import { getEventAvailability } from '../services/availability';
 import type { EventData } from '../services/events';
@@ -14,6 +16,7 @@ import AvailabilityHeatmap from '../components/AvailabilityHeatmap';
 
 export default function PlanView() {
   const { id } = useParams();
+  const { user } = useAuth();
   const [event, setEvent] = useState<EventData | null>(null);
   const [availability, setAvailability] = useState<ParticipantAvailability[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,6 +37,8 @@ export default function PlanView() {
 
         if (eventData) {
           setEvent(eventData);
+          console.log('Event organizer:', eventData.organizerId);
+          console.log('Current user:', user?.id);
         }
 
         setAvailability(availabilityData);
@@ -45,7 +50,7 @@ export default function PlanView() {
     };
 
     loadEventData();
-  }, [id]);
+  }, [id, user]);
 
   const handleCopyLink = () => {
     const shareUrl = `${window.location.origin}/join/${id}`;
@@ -79,6 +84,15 @@ export default function PlanView() {
           </Link>
 
           <div className="flex items-center gap-3">
+            {user?.id === event?.organizerId && (
+              <Link
+                to={`/event/${id}/edit`}
+                className="flex items-center space-x-2 px-4 py-2.5 bg-white/60 backdrop-blur-sm border border-[#75619D]/30 text-[#75619D] hover:bg-white/80 hover:border-[#75619D]/50 rounded-lg transition-all duration-300 text-sm font-medium shadow-sm"
+              >
+                <Edit className="w-4 h-4" strokeWidth={2} />
+                <span>Edit</span>
+              </Link>
+            )}
             <Link
               to={`/join/${id}`}
               className="flex items-center space-x-2 px-4 py-2.5 bg-[#75619D] text-white hover:bg-[#75619D]/90 rounded-lg transition-all duration-300 text-sm font-medium shadow-sm hover:shadow-md"

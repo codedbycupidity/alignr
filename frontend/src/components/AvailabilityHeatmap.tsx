@@ -44,6 +44,14 @@ export default function AvailabilityHeatmap({
     return slots;
   }, [startTime, endTime, intervalMinutes]);
 
+  // Convert 24-hour time to 12-hour AM/PM format
+  const formatTime12Hour = (time24: string): string => {
+    const [hour, min] = time24.split(':').map(Number);
+    const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    const ampm = hour < 12 ? 'AM' : 'PM';
+    return `${hour12}:${min.toString().padStart(2, '0')} ${ampm}`;
+  };
+
   // Get available participants for a slot
   const getAvailableParticipants = (date: string, slotStart: string): string[] => {
     return availability
@@ -79,7 +87,7 @@ export default function AvailabilityHeatmap({
     );
   }
 
-  const containerWidth = 60 + (dates.length * 40) + 24; // time column + (dates × date width) + padding
+  const containerWidth = 80 + (dates.length * 40) + 24; // time column + (dates × date width) + padding
 
   return (
     <div className="bg-white rounded-lg border border-gray-200/50 shadow-sm p-3 inline-block" style={{ width: `${containerWidth}px` }}>
@@ -94,7 +102,7 @@ export default function AvailabilityHeatmap({
       <div>
         <div>
           {/* Header row with dates */}
-          <div className="grid mb-1" style={{ gridTemplateColumns: `60px repeat(${dates.length}, 40px)` }}>
+          <div className="grid mb-1" style={{ gridTemplateColumns: `80px repeat(${dates.length}, 40px)` }}>
             <div className="h-10"></div>
             {dates.map((date, i) => {
               const dateObj = new Date(date + 'T00:00:00');
@@ -116,11 +124,11 @@ export default function AvailabilityHeatmap({
 
           {/* Time slot rows */}
           {timeSlots.map((slot, timeIndex) => (
-            <div key={timeIndex} className="grid" style={{ gridTemplateColumns: `60px repeat(${dates.length}, 40px)` }}>
+            <div key={timeIndex} className="grid" style={{ gridTemplateColumns: `80px repeat(${dates.length}, 40px)` }}>
               {/* Time label */}
               <div className="h-6 flex items-center pr-2">
                 <span className="text-xs text-gray-700 font-medium">
-                  {slot.startTime}
+                  {formatTime12Hour(slot.startTime)}
                 </span>
               </div>
 

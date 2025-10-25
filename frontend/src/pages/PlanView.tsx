@@ -342,13 +342,15 @@ export default function PlanView() {
                 </>
               )}
             </button>
-            <button
-              onClick={logout}
-              className="flex items-center space-x-2 px-4 py-2.5 bg-white/60 backdrop-blur-sm border border-gray-300 text-gray-700 hover:bg-white/80 hover:border-gray-400 rounded-lg transition-all duration-300 text-sm font-medium shadow-sm"
-            >
-              <LogOut className="w-4 h-4" strokeWidth={2} />
-              <span>Logout</span>
-            </button>
+            {user && (
+              <button
+                onClick={logout}
+                className="flex items-center space-x-2 px-4 py-2.5 bg-white/60 backdrop-blur-sm border border-gray-300 text-gray-700 hover:bg-white/80 hover:border-gray-400 rounded-lg transition-all duration-300 text-sm font-medium shadow-sm"
+              >
+                <LogOut className="w-4 h-4" strokeWidth={2} />
+                <span>Logout</span>
+              </button>
+            )}
           </div>
         </div>
       </nav>

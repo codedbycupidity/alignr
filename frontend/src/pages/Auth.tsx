@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Calendar, AlertCircle, Loader2, ArrowRight } from 'lucide-react';
+import { AlertCircle, Loader2, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
+import favicon from '../assets/favicon.png';
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -86,8 +87,8 @@ export default function Auth() {
         {/* Logo and brand */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center space-x-2 mb-8 group">
-            <div className="w-10 h-10 bg-[#75619D] rounded-md flex items-center justify-center transition-colors">
-              <Calendar className="w-6 h-6 text-white" strokeWidth={2} />
+            <div className="w-10 h-10 rounded-md overflow-hidden">
+              <img src={favicon} alt="Alignr" className="w-full h-full object-cover" />
             </div>
             <span className="text-2xl font-semibold text-[#75619D]">Alignr</span>
           </Link>

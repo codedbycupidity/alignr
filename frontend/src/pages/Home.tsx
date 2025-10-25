@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
 import {
-  Calendar,
   MessageSquare,
   TrendingUp,
   CheckCircle,
 } from "lucide-react";
+import favicon from "../assets/favicon.png";
 
 export default function Home() {
   return (
@@ -14,8 +14,8 @@ export default function Home() {
       <nav className="bg-[#0F0F16]/80 backdrop-blur-lg border-b border-[#1E1E29]/60 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center h-16">
           <Link to="/" className="flex items-center space-x-2.5 group">
-            <div className="w-8 h-8 bg-gradient-to-br from-[#7B61FF] to-[#5A3FFF] rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-[#7B61FF]/50 transition-all duration-500">
-              <Calendar className="w-4.5 h-4.5 text-white" strokeWidth={2.5} />
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
+              <img src={favicon} alt="Alignr" className="w-full h-full object-cover" />
             </div>
             <span className="text-xl font-semibold text-white tracking-tight">Alignr</span>
           </Link>
@@ -148,8 +148,8 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 text-center sm:text-left grid sm:grid-cols-3 gap-10">
           <div>
             <div className="flex justify-center sm:justify-start items-center space-x-2.5 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-[#7B61FF] to-[#5A3FFF] rounded-lg flex items-center justify-center shadow-lg">
-                <Calendar className="w-4.5 h-4.5 text-white" strokeWidth={2.5} />
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
+                <img src={favicon} alt="Alignr" className="w-full h-full object-cover" />
               </div>
               <span className="text-lg font-semibold text-white">Alignr</span>
             </div>

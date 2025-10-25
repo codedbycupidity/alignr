@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { getUserEvents, getParticipants, deleteEvent } from '../services/events';
 import type { EventData } from '../services/events';
 import EventCard from '../components/EventCard';
+import favicon from '../assets/favicon.png';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -78,8 +79,8 @@ export default function Dashboard() {
 
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-[#75619D] rounded-md flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-white" strokeWidth={2} />
+              <div className="w-8 h-8 rounded-md overflow-hidden">
+                <img src={favicon} alt="Alignr" className="w-full h-full object-cover" />
               </div>
               <span className="text-lg font-semibold text-[#75619D]">Alignr</span>
             </Link>
@@ -190,8 +191,8 @@ export default function Dashboard() {
             </div>
           ) : events.length === 0 ? (
             <div className="text-center py-12">
-              <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center mx-auto mb-3">
-                <Calendar className="w-6 h-6 text-gray-400" />
+              <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center mx-auto mb-3 overflow-hidden">
+                <img src={favicon} alt="No events" className="w-full h-full object-cover" />
               </div>
               <h3 className="text-sm font-medium text-gray-900 mb-1">No events yet</h3>
               <p className="text-sm text-gray-500 mb-4">

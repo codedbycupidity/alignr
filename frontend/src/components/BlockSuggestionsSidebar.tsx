@@ -1,5 +1,6 @@
 import { Sparkles, Loader2, Plus, Clock, MapPin, CheckSquare, FileText, BarChart3, Users, DollarSign } from 'lucide-react';
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { BlockSuggestion } from '../services/gemini';
 import type { Block } from '../types/block';
 
@@ -70,46 +71,59 @@ export default function BlockSuggestionsSidebar({
               Add a Block
             </button>
 
-            {showBlockMenu && (
-              <div className="mt-2 space-y-1 bg-white border border-gray-200 rounded-lg p-2 shadow-lg">
-                {BLOCK_TYPES.map((blockType) => {
-                  const Icon = blockType.icon;
-                  const isDisabled = (blockType.type === 'time' || blockType.type === 'location') && hasBlockType(blockType.type);
-                  return (
-                    <button
-                      key={blockType.type}
-                      onClick={() => {
-                        if (!isDisabled) {
-                          onAddBlock(blockType.type);
-                          setShowBlockMenu(false);
-                        }
-                      }}
-                      disabled={isDisabled}
-                      className={`w-full p-3 text-left rounded-md transition-colors group ${
-                        isDisabled
-                          ? 'opacity-50 cursor-not-allowed'
-                          : 'hover:bg-gray-50'
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <Icon className={`w-5 h-5 flex-shrink-0 mt-0.5 ${isDisabled ? 'text-gray-400' : 'text-[#75619D]'}`} />
-                        <div>
-                          <div className={`font-medium text-sm ${
+            <AnimatePresence>
+              {showBlockMenu && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                  animate={{ opacity: 1, height: 'auto', marginTop: 8 }}
+                  exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                  className="overflow-hidden"
+                >
+                  <div className="space-y-1 bg-white border border-gray-200 rounded-lg p-2 shadow-lg">
+                    {BLOCK_TYPES.map((blockType, index) => {
+                      const Icon = blockType.icon;
+                      const isDisabled = (blockType.type === 'time' || blockType.type === 'location') && hasBlockType(blockType.type);
+                      return (
+                        <motion.button
+                          key={blockType.type}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.03, duration: 0.2 }}
+                          onClick={() => {
+                            if (!isDisabled) {
+                              onAddBlock(blockType.type);
+                              setShowBlockMenu(false);
+                            }
+                          }}
+                          disabled={isDisabled}
+                          className={`w-full p-3 text-left rounded-md transition-colors group ${
                             isDisabled
-                              ? 'text-gray-400'
-                              : 'text-gray-900 group-hover:text-[#75619D]'
-                          }`}>
-                            {blockType.label}
-                            {isDisabled && <span className="ml-2 text-xs">(Added)</span>}
+                              ? 'opacity-50 cursor-not-allowed'
+                              : 'hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <Icon className={`w-5 h-5 flex-shrink-0 mt-0.5 ${isDisabled ? 'text-gray-400' : 'text-[#75619D]'}`} />
+                            <div>
+                              <div className={`font-medium text-sm ${
+                                isDisabled
+                                  ? 'text-gray-400'
+                                  : 'text-gray-900 group-hover:text-[#75619D]'
+                              }`}>
+                                {blockType.label}
+                                {isDisabled && <span className="ml-2 text-xs">(Added)</span>}
+                              </div>
+                              <div className="text-xs text-gray-500">{blockType.description}</div>
+                            </div>
                           </div>
-                          <div className="text-xs text-gray-500">{blockType.description}</div>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* AI Suggestions */}

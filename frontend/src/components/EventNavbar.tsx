@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Calendar, Users, Share2, CheckCircle2, LogOut, LogIn } from 'lucide-react';
+import { Users, Share2, CheckCircle2, LogOut, LogIn } from 'lucide-react';
+import faviconImg from '../assets/favicon.png';
 
 interface EventNavbarProps {
   eventId: string;
@@ -23,8 +24,8 @@ export default function EventNavbar({
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link to="/" className="flex items-center space-x-2.5 group">
-            <div className="w-9 h-9 bg-[#75619D] rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-              <Calendar className="w-5 h-5 text-white" strokeWidth={2.5} />
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center overflow-hidden">
+              <img src={faviconImg} alt="Alignr" className="w-full h-full object-cover" />
             </div>
             <span className="text-lg font-bold text-[#1E1E2F] tracking-tight">Alignr</span>
           </Link>

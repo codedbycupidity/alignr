@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Calendar, Users, Trash2 } from 'lucide-react';
+import { Calendar, Users, Trash2, Clock } from 'lucide-react';
 import type { EventData } from '../services/events';
 
 interface EventCardProps {
@@ -18,9 +18,12 @@ export default function EventCard({ event, participantCount, onDelete, onClick }
       <div className="flex items-center justify-between">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 mb-2">
-            <h3 className="text-sm font-medium text-gray-900 truncate">
-              {event.name}
-            </h3>
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-gray-600 flex-shrink-0" strokeWidth={2} />
+              <h3 className="text-sm font-medium text-gray-900 truncate">
+                {event.name}
+              </h3>
+            </div>
             <span
               className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                 event.status === 'finalized'
@@ -34,7 +37,7 @@ export default function EventCard({ event, participantCount, onDelete, onClick }
 
           <div className="flex items-center gap-4 text-xs text-gray-500">
             <div className="flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5" />
+              <Clock className="w-3.5 h-3.5" />
               <span>{event.createdAt?.toDate?.().toLocaleDateString('en-US', {
                 month: 'short',
                 day: 'numeric',
@@ -65,7 +68,7 @@ export default function EventCard({ event, participantCount, onDelete, onClick }
             </Link>
             <button
               onClick={(e) => onDelete(event.id, event.name, e)}
-              className="text-sm font-medium text-red-600 hover:text-red-700 transition-colors flex items-center gap-1"
+              className="text-sm font-medium text-gray-600 hover:text-gray-700 transition-colors flex items-center gap-1"
               title="Delete event"
             >
               <Trash2 className="w-3.5 h-3.5" />

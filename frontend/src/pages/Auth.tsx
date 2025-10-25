@@ -14,7 +14,6 @@ export default function Auth() {
   const [step, setStep] = useState<'phone' | 'code' | 'name'>('phone');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isNewUser, setIsNewUser] = useState(false);
 
   const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,8 +32,8 @@ export default function Auth() {
 
       await sendCode(formattedPhone);
       setStep('code');
-    } catch (err: any) {
-      setError(err.message || 'Failed to send verification code. Please try again.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send verification code. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -50,13 +49,12 @@ export default function Auth() {
 
       // Check if this is a new user (no name stored yet)
       if (result.isNewUser) {
-        setIsNewUser(true);
         setStep('name');
       } else {
         navigate('/dashboard');
       }
-    } catch (err: any) {
-      setError(err.message || 'Invalid verification code. Please try again.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Invalid verification code. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -74,8 +72,8 @@ export default function Auth() {
         await createUser(user.id, user.email || '', name);
       }
       navigate('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Failed to save your name. Please try again.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save your name. Please try again.');
     } finally {
       setLoading(false);
     }

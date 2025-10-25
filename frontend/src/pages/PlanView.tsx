@@ -249,7 +249,7 @@ export default function PlanView() {
     }
   };
 
-  const handleDragEnd = (e: React.DragEvent) => {
+  const handleDragEnd = () => {
     setIsDragging(false);
     // Don't clear draggingSuggestion yet - wait for drop or cancel
   };
@@ -271,8 +271,13 @@ export default function PlanView() {
 
   // Find TimeBlock with availability mode
   const timeBlock = blocks.find(
-    (block): block is TimeBlock =>
-      block.type === 'time' && block.content.mode === 'availability'
+    (block): block is TimeBlock => {
+      if (block.type === 'time') {
+        const tb = block as TimeBlock;
+        return tb.content.mode === 'availability';
+      }
+      return false;
+    }
   ) as TimeBlock | undefined;
 
   if (loading) {
@@ -359,9 +364,9 @@ export default function PlanView() {
             setDraggingSuggestion(null);
             setIsDragging(false);
           }}
-          onConfirm={(config) => {
+          onConfirm={async (config) => {
             const dropPos = isDragging && draggingSuggestion ? dragPosition : undefined;
-            handleAddTimeBlock(config, dropPos);
+            await handleAddTimeBlock(config, dropPos);
           }}
           eventName={event.name}
           isDragging={isDragging && draggingSuggestion !== null}

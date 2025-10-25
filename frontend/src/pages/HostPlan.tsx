@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Draggable from 'react-draggable';
-import { Calendar, Share2, Check, Users, MessageSquare, Clock, Sparkles, Plus } from 'lucide-react';
+import { Calendar, Check, Users, MessageSquare, Clock, Sparkles, Plus } from 'lucide-react';
 
 // Block type definition
 interface Block {

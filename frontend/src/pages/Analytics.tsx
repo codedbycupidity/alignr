@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { useState } from 'react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { initializeApp } from 'firebase/app';
@@ -14,10 +15,16 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
+interface AnalyticsResult {
+  insights: string;
+  dataCount: number;
+  rawData?: unknown[];
+}
+
 const Analytics = () => {
   const [loading, setLoading] = useState(false);
   const [analysisType, setAnalysisType] = useState<'time_patterns' | 'location_patterns' | 'engagement_trends' | 'event_summary'>('event_summary');
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<AnalyticsResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const functions = getFunctions(app);
@@ -30,9 +37,9 @@ const Analytics = () => {
       const response = await getAnalytics({
         analysisType,
       });
-      setResult(response.data);
-    } catch (err: any) {
-      setError(err.message);
+      setResult(response.data as AnalyticsResult);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch analytics');
     } finally {
       setLoading(false);
     }
@@ -143,25 +150,25 @@ const Analytics = () => {
               </div>
 
               <div className="bg-blue-50 border-l-4 border-jakarta p-4 rounded">
-                <p className="text-dark-plum whitespace-pre-wrap">{result.data.insights}</p>
+                <p className="text-dark-plum whitespace-pre-wrap">{result.insights}</p>
               </div>
 
-              {result.data.dataCount > 0 && (
+              {result.dataCount > 0 && (
                 <div className="mt-4 text-sm text-gray-600">
-                  <strong>Data Points Analyzed:</strong> {result.data.dataCount}
+                  <strong>Data Points Analyzed:</strong> {result.dataCount}
                 </div>
               )}
             </div>
 
             {/* Raw Data Table */}
-            {result.data.rawData && result.data.rawData.length > 0 && (
+            {result.rawData && result.rawData.length > 0 && (
               <details className="bg-white rounded-lg shadow-md p-6">
                 <summary className="cursor-pointer font-semibold text-dark-plum hover:text-jakarta">
                   📋 View Raw Data from Snowflake
                 </summary>
                 <div className="mt-4 overflow-x-auto">
                   <pre className="bg-gray-100 p-4 rounded text-sm overflow-auto">
-                    {JSON.stringify(result.data.rawData, null, 2)}
+                    {JSON.stringify(result.rawData, null, 2)}
                   </pre>
                 </div>
               </details>

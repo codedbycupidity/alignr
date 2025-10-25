@@ -212,7 +212,14 @@ export default function Home() {
 }
 
 // Feature card component
-function FeatureCard({ icon, title, desc, color }: any) {
+interface FeatureCardProps {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+  color: string;
+}
+
+function FeatureCard({ icon, title, desc, color }: FeatureCardProps) {
   return (
     <div className="bg-[#16161E] border border-[#1E1E29] rounded-2xl p-8 hover:border-[#7B61FF]/40 transition-all duration-500 group">
       <div className={`w-12 h-12 bg-gradient-to-br ${color} rounded-xl flex items-center justify-center mb-5 shadow-lg group-hover:shadow-[#7B61FF]/50 transition-all duration-500`}>

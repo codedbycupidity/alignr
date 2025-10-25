@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Calendar, AlertCircle, Loader2, Users, Clock, Eye } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Timestamp } from 'firebase/firestore';
 import { getEvent, addParticipant, findParticipantByName, verifyParticipantPassword, getBlocks } from '../services/events';
-import { saveParticipantAvailability, getParticipantAvailability } from '../services/availability';
 import type { EventData } from '../services/events';
 import type { TimeSlot } from '../types/availability';
 import type { TimeBlock } from '../types/block';
@@ -50,16 +50,21 @@ export default function JoinEvent() {
         // Load blocks to find TimeBlock with availability mode
         const blocks = await getBlocks(eventId!);
         const timeBlockData = blocks.find(
-          (block): block is TimeBlock =>
-            block.type === 'time' && block.content.mode === 'availability'
+          (block): block is TimeBlock => {
+            if (block.type === 'time') {
+              const tb = block as TimeBlock;
+              return tb.content.mode === 'availability';
+            }
+            return false;
+          }
         );
 
         if (timeBlockData) {
           setTimeBlock(timeBlockData);
         }
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to load event');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load event');
     } finally {
       setLoading(false);
     }
@@ -112,9 +117,9 @@ export default function JoinEvent() {
 
       // Name available or password verified - proceed to availability
       setStep('availability');
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error checking participant:', err);
-      setError(err.message || 'Failed to verify participant');
+      setError(err instanceof Error ? err.message : 'Failed to verify participant');
     } finally {
       setSubmitting(false);
     }
@@ -164,7 +169,7 @@ export default function JoinEvent() {
           participantId,
           participantName: name.trim(),
           timeSlots: availableSlots,
-          submittedAt: new Date()
+          submittedAt: Timestamp.now()
         }
       ];
 
@@ -182,9 +187,9 @@ export default function JoinEvent() {
       console.log('✅ Block updated successfully');
 
       navigate(`/event/${eventId}`);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error joining event:', err);
-      setError(err.message || 'Failed to join event');
+      setError(err instanceof Error ? err.message : 'Failed to join event');
     } finally {
       setSubmitting(false);
     }

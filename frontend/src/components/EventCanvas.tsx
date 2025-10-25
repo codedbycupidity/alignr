@@ -48,8 +48,24 @@ export default function EventCanvas({ blocks, isOrganizer, onLayoutChange }: Eve
 
   const renderBlock = (block: Block) => {
     // Render TimeBlock with availability heatmap
-    if (block.type === 'time' && block.content.mode === 'availability') {
+    if (block.type === 'time') {
       const tb = block as TimeBlock;
+      if (tb.content.mode !== 'availability') {
+        // Handle other time block modes if needed
+        return (
+          <div className="h-full flex flex-col">
+            <div className="text-sm font-medium text-gray-700">
+              {block.type.toUpperCase()} BLOCK
+            </div>
+            <div className="text-xs text-gray-500 mt-1">
+              {block.title || 'Untitled'}
+            </div>
+            <div className="text-xs text-gray-400 mt-2">
+              Block rendering not yet implemented
+            </div>
+          </div>
+        );
+      }
       const dates = tb.content.selectedDates || [];
       const availability = tb.content.availability || [];
 

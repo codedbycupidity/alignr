@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Calendar, Plus, Users, Clock, CheckCircle2, LogOut, Loader2 } from 'lucide-react';
+import { Calendar, Plus, Clock, CheckCircle2, LogOut, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { getUserEvents, getParticipants, deleteEvent } from '../services/events';
 import type { EventData } from '../services/events';

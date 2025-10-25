@@ -25,6 +25,12 @@ export interface EventData {
   createdAt: Timestamp;
   updatedAt: Timestamp;
   status: 'draft' | 'active' | 'finalized';
+  dateType?: 'specific' | 'days';
+  selectedDates?: string[];
+  selectedDays?: number[];
+  startTime?: string;
+  endTime?: string;
+  timezone?: string;
 }
 
 export interface ParticipantData {
@@ -44,6 +50,12 @@ export async function createEvent(
     description?: string;
     eventType?: string;
     isPublic?: boolean;
+    dateType?: 'specific' | 'days';
+    selectedDates?: string[];
+    selectedDays?: number[];
+    startTime?: string;
+    endTime?: string;
+    timezone?: string;
   }
 ): Promise<string> {
   const eventRef = doc(collection(db, 'events'));
@@ -66,6 +78,30 @@ export async function createEvent(
 
   if (options?.eventType) {
     eventData.eventType = options.eventType;
+  }
+
+  if (options?.dateType) {
+    eventData.dateType = options.dateType;
+  }
+
+  if (options?.selectedDates) {
+    eventData.selectedDates = options.selectedDates;
+  }
+
+  if (options?.selectedDays) {
+    eventData.selectedDays = options.selectedDays;
+  }
+
+  if (options?.startTime) {
+    eventData.startTime = options.startTime;
+  }
+
+  if (options?.endTime) {
+    eventData.endTime = options.endTime;
+  }
+
+  if (options?.timezone) {
+    eventData.timezone = options.timezone;
   }
 
   await setDoc(eventRef, eventData);
@@ -136,18 +172,26 @@ export async function updateEvent(
 export async function addParticipant(
   eventId: string,
   participantName: string,
-  userId?: string
+  userId?: string,
+  password?: string
 ): Promise<string> {
   const eventRef = doc(db, 'events', eventId);
   const participantId = userId || `guest-${Date.now()}`;
 
   const participantRef = doc(collection(eventRef, 'participants'), participantId);
-  await setDoc(participantRef, {
+  const participantData: any = {
     id: participantId,
     name: participantName,
     joinedAt: serverTimestamp(),
     role: 'participant'
-  });
+  };
+
+  // Only add password if provided
+  if (password) {
+    participantData.password = password;
+  }
+
+  await setDoc(participantRef, participantData);
 
   return participantId;
 }

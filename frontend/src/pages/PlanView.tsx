@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { 
-  Calendar, 
-  Users, 
-  MessageSquare, 
-  Check, 
-  BarChart3, 
+import {
+  Calendar,
+  Users,
+  MessageSquare,
+  Check,
+  BarChart3,
   Sparkles,
-  ArrowLeft
+  ArrowLeft,
+  Share2,
+  Copy,
+  CheckCircle2
 } from 'lucide-react';
 
 // Block type definition
@@ -34,11 +37,12 @@ export default function PlanView() {
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [eventName, setEventName] = useState('Loading...');
   const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     // TODO: Fetch plan data from Firebase using the id
     console.log('Loading plan:', id);
-    
+
     // Mock data load
     setTimeout(() => {
       setBlocks(mockBlocks);
@@ -46,6 +50,13 @@ export default function PlanView() {
       setLoading(false);
     }, 500);
   }, [id]);
+
+  const handleCopyLink = () => {
+    const shareUrl = `${window.location.origin}/join/${id}`;
+    navigator.clipboard.writeText(shareUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   if (loading) {
     return (
@@ -75,13 +86,31 @@ export default function PlanView() {
 
           <h1 className="text-xl font-bold text-[#1E1E2F]">{eventName}</h1>
 
-          <Link
-            to="/"
-            className="flex items-center space-x-2 px-4 py-2 text-[#1E1E2F] hover:bg-gray-50 rounded-lg transition-all duration-300 text-sm font-medium"
-          >
-            <ArrowLeft className="w-4 h-4" strokeWidth={2} />
-            <span>Home</span>
-          </Link>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleCopyLink}
+              className="flex items-center space-x-2 px-4 py-2 bg-[#75619D] text-white hover:bg-[#75619D]/90 rounded-lg transition-all duration-300 text-sm font-medium"
+            >
+              {copied ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4" strokeWidth={2} />
+                  <span>Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Share2 className="w-4 h-4" strokeWidth={2} />
+                  <span>Share</span>
+                </>
+              )}
+            </button>
+            <Link
+              to="/"
+              className="flex items-center space-x-2 px-4 py-2 text-[#1E1E2F] hover:bg-gray-50 rounded-lg transition-all duration-300 text-sm font-medium"
+            >
+              <ArrowLeft className="w-4 h-4" strokeWidth={2} />
+              <span>Home</span>
+            </Link>
+          </div>
         </div>
       </nav>
 

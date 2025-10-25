@@ -8,6 +8,7 @@ import PlanView from './pages/PlanView';
 import HostPlan from './pages/HostPlan';
 import Analytics from './pages/Analytics';
 import CreateEvent from './pages/CreateEvent';
+import JoinEvent from './pages/JoinEvent';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
           <Route path="/host/:id" element={<HostPlan />} />
           <Route path="/event/create" element={<CreateEvent />} />
           <Route path="/event/:id" element={<PlanView />} />
+          <Route path="/join/:eventId" element={<JoinEvent />} />
           <Route path="/analytics" element={<Analytics />} />
         </Routes>
       </Router>

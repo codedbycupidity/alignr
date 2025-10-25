@@ -6,5 +6,5 @@ initializeApp();
 // Export all Gemini functions
 export { suggestBlocks, detectEventType, suggestBlockContent } from './gemini';
 
-// Export all Snowflake functions
+// Export Snowflake Cortex AI function
 export { generateEventInsight } from './snowflake';

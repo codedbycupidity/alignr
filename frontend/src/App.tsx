@@ -1,28 +1,37 @@
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import Home from './pages/Home';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+import Dashboard from './pages/Dashboard';
+import PlanCreator from './pages/PlanCreator';
+import PlanView from './pages/PlanView';
+import HostPlan from './pages/HostPlan';
+import TestGemini from './pages/TestGemini';
+import TestSnowflake from './pages/TestSnowflake';
+import Analytics from './pages/Analytics';
+
 function App() {
   return (
-    <div className="min-h-screen bg-bright-gray">
-      <div className="container mx-auto px-4 py-8">
-        <header className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-jakarta mb-4">alignr</h1>
-          <p className="text-dark-blue-gray text-lg">
-            One link, zero chaos — from idea to done.
-          </p>
-        </header>
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/create" element={<PlanCreator />} />
+          <Route path="/plan/:id" element={<PlanView />} />
+          <Route path="/host/:id" element={<HostPlan />} />
 
-        <main className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-lg shadow-lg p-8 border-2 border-wisteria">
-            <h2 className="text-2xl font-semibold text-jakarta mb-4">
-              Welcome to Alignr
-            </h2>
-            <p className="text-dark-blue-gray">
-              Your collaborative event planning platform. Create modular event pages
-              with smart structured blocks for group coordination.
-            </p>
-          </div>
-        </main>
-      </div>
-    </div>
-  )
+          {/* Testing & Analytics Routes */}
+          <Route path="/test/gemini" element={<TestGemini />} />
+          <Route path="/test/snowflake" element={<TestSnowflake />} />
+          <Route path="/analytics" element={<Analytics />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
+  );
 }
 
-export default App
+export default App;

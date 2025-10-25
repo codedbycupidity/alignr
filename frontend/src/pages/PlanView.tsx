@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { getEvent, getBlocks, addBlock, updateEvent, updateBlock } from '../services/events';
+import { getEvent, getBlocks, addBlock, updateEvent, updateBlock, deleteBlock, getParticipants } from '../services/events';
 import { suggestBlocks, type BlockSuggestion } from '../services/gemini';
 import type { EventData } from '../services/events';
 import type { Block, TimeBlock, TimeBlockContent, BlockLayout, LocationBlock } from '../types/block';
@@ -29,6 +29,7 @@ export default function PlanView() {
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [participantId, setParticipantId] = useState<string | null>(null);
+  const [participantCount, setParticipantCount] = useState(0);
 
   // Get participant ID from localStorage if user is not logged in
   useEffect(() => {
@@ -46,10 +47,11 @@ export default function PlanView() {
       try {
         console.log('Loading event:', id);
 
-        // Load event and blocks in parallel
-        const [eventData, blocksData] = await Promise.all([
+        // Load event, blocks, and participants in parallel
+        const [eventData, blocksData, participantsData] = await Promise.all([
           getEvent(id),
-          getBlocks(id)
+          getBlocks(id),
+          getParticipants(id)
         ]);
 
         if (eventData) {
@@ -70,7 +72,9 @@ export default function PlanView() {
         }
 
         setBlocks(blocksData);
+        setParticipantCount(participantsData.length);
         console.log('Loaded blocks:', blocksData);
+        console.log('Loaded participants:', participantsData.length);
       } catch (error) {
         console.error('Error loading event data:', error);
       } finally {
@@ -279,7 +283,7 @@ export default function PlanView() {
     }
   };
 
-  // Find TimeBlock with availability mode
+  // Find TimeBlock with availability mode (for participant count)
   const timeBlock = blocks.find(
     (block): block is TimeBlock => {
       if (block.type === 'time') {
@@ -289,6 +293,26 @@ export default function PlanView() {
       return false;
     }
   ) as TimeBlock | undefined;
+
+  // Find TimeBlock with fixed mode (for header display)
+  const fixedTimeBlock = blocks.find(
+    (block): block is TimeBlock => {
+      if (block.type === 'time') {
+        const tb = block as TimeBlock;
+        return tb.content.mode === 'fixed';
+      }
+      return false;
+    }
+  ) as TimeBlock | undefined;
+
+  // Filter out fixed time blocks from canvas display
+  const canvasBlocks = blocks.filter(block => {
+    if (block.type === 'time') {
+      const tb = block as TimeBlock;
+      return tb.content.mode !== 'fixed';
+    }
+    return true;
+  });
 
   if (loading) {
     return (
@@ -321,6 +345,7 @@ export default function PlanView() {
           <BlockSuggestionsSidebar
             loadingSuggestions={loadingSuggestions}
             suggestions={suggestions}
+            existingBlocks={blocks}
             onSuggestionClick={handleSuggestionClick}
             onDragStart={handleDragStart}
             onDrag={handleDrag}
@@ -364,6 +389,8 @@ export default function PlanView() {
             editingName={editingName}
             savingName={savingName}
             timeBlock={timeBlock || null}
+            fixedTimeBlock={fixedTimeBlock || null}
+            participantCount={participantCount}
             nameInputRef={nameInputRef}
             onNameChange={setEventName}
             onSaveName={handleSaveEventName}
@@ -372,6 +399,12 @@ export default function PlanView() {
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleSaveEventName();
               if (e.key === 'Escape') handleCancelEditName();
+            }}
+            onDeleteFixedTimeBlock={async () => {
+              if (!id || !fixedTimeBlock) return;
+              await deleteBlock(id, fixedTimeBlock.id);
+              const updatedBlocks = await getBlocks(id);
+              setBlocks(updatedBlocks);
             }}
           />
 
@@ -382,7 +415,7 @@ export default function PlanView() {
             className={isDragging ? 'ring-2 ring-[#75619D] ring-opacity-50 rounded-lg transition-all' : ''}
           >
             <EventCanvas
-              blocks={blocks}
+              blocks={canvasBlocks}
               isOrganizer={user?.id === event?.organizerId}
               currentUserId={user?.id || participantId || undefined}
               onLayoutChange={handleLayoutChange}
@@ -393,6 +426,14 @@ export default function PlanView() {
 
                 const updatedBlock = { ...blockToUpdate, ...updates };
                 await updateBlock(id, blockId, updatedBlock);
+
+                // Reload blocks
+                const updatedBlocks = await getBlocks(id);
+                setBlocks(updatedBlocks);
+              }}
+              onBlockDelete={async (blockId) => {
+                if (!id) return;
+                await deleteBlock(id, blockId);
 
                 // Reload blocks
                 const updatedBlocks = await getBlocks(id);

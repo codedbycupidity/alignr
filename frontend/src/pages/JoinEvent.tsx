@@ -115,6 +115,14 @@ export default function JoinEvent() {
         }
       }
 
+      // If there's no availability tracking (no timeBlock), skip to event page
+      if (!timeBlock) {
+        const participantId = existingParticipant?.id || await addParticipant(eventId, name.trim(), undefined, password || undefined);
+        localStorage.setItem(`participant_${eventId}`, participantId);
+        navigate(`/event/${eventId}`);
+        return;
+      }
+
       // Name available or password verified - proceed to availability
       setStep('availability');
     } catch (err) {
@@ -374,8 +382,10 @@ export default function JoinEvent() {
                       <Loader2 className="w-4 h-4 animate-spin" />
                       Checking...
                     </>
-                  ) : (
+                  ) : timeBlock ? (
                     'Continue to Availability'
+                  ) : (
+                    'Join Event'
                   )}
                 </button>
               </form>

@@ -1,5 +1,5 @@
 import { RefObject } from 'react';
-import { Calendar, Users, Check, X, Loader2 } from 'lucide-react';
+import { Calendar, Users, Check, X, Loader2, Clock, Globe } from 'lucide-react';
 import type { TimeBlock } from '../types/block';
 
 interface EditableEventHeaderProps {
@@ -9,12 +9,15 @@ interface EditableEventHeaderProps {
   editingName: boolean;
   savingName: boolean;
   timeBlock: TimeBlock | null;
+  fixedTimeBlock?: TimeBlock | null;
+  participantCount?: number;
   nameInputRef: RefObject<HTMLInputElement>;
   onNameChange: (name: string) => void;
   onSaveName: () => void;
   onCancelEdit: () => void;
   onStartEdit: () => void;
   onKeyDown: (e: React.KeyboardEvent) => void;
+  onDeleteFixedTimeBlock?: () => void;
 }
 
 export default function EditableEventHeader({
@@ -24,13 +27,32 @@ export default function EditableEventHeader({
   editingName,
   savingName,
   timeBlock,
+  fixedTimeBlock,
+  participantCount = 0,
   nameInputRef,
   onNameChange,
   onSaveName,
   onCancelEdit,
   onStartEdit,
-  onKeyDown
+  onKeyDown,
+  onDeleteFixedTimeBlock
 }: EditableEventHeaderProps) {
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const formatTime12Hour = (time24: string) => {
+    const [hour, min] = time24.split(':').map(Number);
+    const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    const ampm = hour < 12 ? 'AM' : 'PM';
+    return `${hour12}:${min.toString().padStart(2, '0')} ${ampm}`;
+  };
   return (
     <div className="mb-8">
       <div className="flex items-center gap-3 mb-3">
@@ -78,23 +100,63 @@ export default function EditableEventHeader({
           )}
         </div>
       </div>
-      {timeBlock && (
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <Calendar className="w-4 h-4 text-[#75619D]" />
-          <span>
-            {timeBlock.content.selectedDates?.length || 0} {timeBlock.content.selectedDates?.length === 1 ? 'date' : 'dates'} selected
-          </span>
-          {timeBlock.content.availability && timeBlock.content.availability.length > 0 && (
-            <>
-              <span className="text-gray-400">•</span>
-              <Users className="w-4 h-4 text-[#75619D]" />
-              <span>
-                {timeBlock.content.availability.length} {timeBlock.content.availability.length === 1 ? 'participant' : 'participants'}
-              </span>
-            </>
-          )}
-        </div>
-      )}
+      {/* Event metadata */}
+      <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
+        {/* Fixed Date/Time */}
+        {fixedTimeBlock && (
+          <>
+            <Calendar className="w-4 h-4 text-[#75619D]" />
+            <span>
+              {fixedTimeBlock.content.fixedDate && formatDate(fixedTimeBlock.content.fixedDate)}
+            </span>
+            <span className="text-gray-400">•</span>
+            <Clock className="w-4 h-4 text-[#75619D]" />
+            <span>
+              {fixedTimeBlock.content.fixedStartTime && formatTime12Hour(fixedTimeBlock.content.fixedStartTime)} - {fixedTimeBlock.content.fixedEndTime && formatTime12Hour(fixedTimeBlock.content.fixedEndTime)}
+            </span>
+            <span className="text-gray-400">•</span>
+            <Globe className="w-4 h-4 text-[#75619D]" />
+            <span className="text-xs">{fixedTimeBlock.content.fixedTimezone?.replace('_', ' ')}</span>
+            {isOrganizer && onDeleteFixedTimeBlock && (
+              <>
+                <span className="text-gray-400">•</span>
+                <button
+                  onClick={() => {
+                    if (window.confirm('Are you sure you want to delete the fixed date/time?')) {
+                      onDeleteFixedTimeBlock();
+                    }
+                  }}
+                  className="p-0.5 hover:bg-gray-200 rounded transition-colors"
+                  title="Delete fixed date/time"
+                >
+                  <X className="w-3.5 h-3.5 text-gray-500 hover:text-gray-700" />
+                </button>
+              </>
+            )}
+          </>
+        )}
+
+        {/* Availability Mode */}
+        {timeBlock && (
+          <>
+            <Calendar className="w-4 h-4 text-[#75619D]" />
+            <span>
+              {timeBlock.content.selectedDates?.length || 0} {timeBlock.content.selectedDates?.length === 1 ? 'date' : 'dates'} selected
+            </span>
+          </>
+        )}
+
+        {/* Participant Count - Show for both modes */}
+        {(timeBlock || fixedTimeBlock) && participantCount > 0 && (
+          <>
+            <span className="text-gray-400">•</span>
+            <Users className="w-4 h-4 text-[#75619D]" />
+            <span>
+              {participantCount} {participantCount === 1 ? 'participant' : 'participants'}
+            </span>
+          </>
+        )}
+      </div>
     </div>
   );
 }

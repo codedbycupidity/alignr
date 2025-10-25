@@ -1,6 +1,7 @@
 import { Sparkles, Loader2, Plus, Clock, MapPin, CheckSquare, FileText, BarChart3, Users, DollarSign } from 'lucide-react';
 import { useState } from 'react';
 import type { BlockSuggestion } from '../services/gemini';
+import type { Block } from '../types/block';
 
 const BLOCK_TYPES = [
   { type: 'time', label: 'Time', icon: Clock, description: 'Schedule & availability' },
@@ -15,6 +16,7 @@ const BLOCK_TYPES = [
 interface BlockSuggestionsSidebarProps {
   loadingSuggestions: boolean;
   suggestions: BlockSuggestion[];
+  existingBlocks: Block[];
   onSuggestionClick: (suggestion: BlockSuggestion) => void;
   onDragStart: (e: React.DragEvent, suggestion: BlockSuggestion) => void;
   onDrag: (e: React.DragEvent) => void;
@@ -25,6 +27,7 @@ interface BlockSuggestionsSidebarProps {
 export default function BlockSuggestionsSidebar({
   loadingSuggestions,
   suggestions,
+  existingBlocks,
   onSuggestionClick,
   onDragStart,
   onDrag,
@@ -32,6 +35,11 @@ export default function BlockSuggestionsSidebar({
   onAddBlock
 }: BlockSuggestionsSidebarProps) {
   const [showBlockMenu, setShowBlockMenu] = useState(false);
+
+  // Check if a block type already exists
+  const hasBlockType = (type: string) => {
+    return existingBlocks.some(block => block.type === type);
+  };
 
   return (
     <aside className="w-80 border-r border-gray-200 bg-white px-6 py-8 overflow-y-auto">
@@ -66,20 +74,33 @@ export default function BlockSuggestionsSidebar({
               <div className="mt-2 space-y-1 bg-white border border-gray-200 rounded-lg p-2 shadow-lg">
                 {BLOCK_TYPES.map((blockType) => {
                   const Icon = blockType.icon;
+                  const isDisabled = (blockType.type === 'time' || blockType.type === 'location') && hasBlockType(blockType.type);
                   return (
                     <button
                       key={blockType.type}
                       onClick={() => {
-                        onAddBlock(blockType.type);
-                        setShowBlockMenu(false);
+                        if (!isDisabled) {
+                          onAddBlock(blockType.type);
+                          setShowBlockMenu(false);
+                        }
                       }}
-                      className="w-full p-3 text-left hover:bg-gray-50 rounded-md transition-colors group"
+                      disabled={isDisabled}
+                      className={`w-full p-3 text-left rounded-md transition-colors group ${
+                        isDisabled
+                          ? 'opacity-50 cursor-not-allowed'
+                          : 'hover:bg-gray-50'
+                      }`}
                     >
                       <div className="flex items-start gap-3">
-                        <Icon className="w-5 h-5 text-[#75619D] flex-shrink-0 mt-0.5" />
+                        <Icon className={`w-5 h-5 flex-shrink-0 mt-0.5 ${isDisabled ? 'text-gray-400' : 'text-[#75619D]'}`} />
                         <div>
-                          <div className="font-medium text-gray-900 group-hover:text-[#75619D] text-sm">
+                          <div className={`font-medium text-sm ${
+                            isDisabled
+                              ? 'text-gray-400'
+                              : 'text-gray-900 group-hover:text-[#75619D]'
+                          }`}>
                             {blockType.label}
+                            {isDisabled && <span className="ml-2 text-xs">(Added)</span>}
                           </div>
                           <div className="text-xs text-gray-500">{blockType.description}</div>
                         </div>

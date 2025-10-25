@@ -4,7 +4,8 @@ import 'react-grid-layout/css/styles.css';
 import type { Block, TimeBlock, LocationBlock, BlockLayout } from '../types/block';
 import AvailabilityHeatmap from './AvailabilityHeatmap';
 import LocationBlock from './LocationBlock';
-import { GripVertical } from 'lucide-react';
+import FixedDateTimeDisplay from './FixedDateTimeDisplay';
+import { GripVertical, X } from 'lucide-react';
 
 interface EventCanvasProps {
   blocks: Block[];
@@ -12,9 +13,10 @@ interface EventCanvasProps {
   currentUserId?: string;
   onLayoutChange?: (blockId: string, layout: BlockLayout) => void;
   onBlockUpdate?: (blockId: string, updates: Partial<Block>) => void;
+  onBlockDelete?: (blockId: string) => void;
 }
 
-export default function EventCanvas({ blocks, isOrganizer, currentUserId, onLayoutChange, onBlockUpdate }: EventCanvasProps) {
+export default function EventCanvas({ blocks, isOrganizer, currentUserId, onLayoutChange, onBlockUpdate, onBlockDelete }: EventCanvasProps) {
   // Build participant name map from TimeBlock availability
   const participantNames = new Map<string, string>();
   blocks.forEach(block => {
@@ -61,43 +63,60 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, onLayo
   }, [blocks, isOrganizer, onLayoutChange]);
 
   const renderBlock = (block: Block) => {
-    // Render TimeBlock with availability heatmap
+    // Render TimeBlock
     if (block.type === 'time') {
       const tb = block as TimeBlock;
-      if (tb.content.mode !== 'availability') {
-        // Handle other time block modes if needed
+
+      // Fixed date/time mode
+      if (tb.content.mode === 'fixed') {
         return (
-          <div className="h-full flex flex-col">
-            <div className="text-sm font-medium text-gray-700">
-              {block.type.toUpperCase()} BLOCK
-            </div>
-            <div className="text-xs text-gray-500 mt-1">
-              {block.title || 'Untitled'}
-            </div>
-            <div className="text-xs text-gray-400 mt-2">
-              Block rendering not yet implemented
-            </div>
+          <div className="h-full overflow-auto">
+            <FixedDateTimeDisplay
+              date={tb.content.fixedDate || new Date().toISOString().split('T')[0]}
+              startTime={tb.content.fixedStartTime || '09:00'}
+              endTime={tb.content.fixedEndTime || '17:00'}
+              timezone={tb.content.fixedTimezone || 'America/New_York'}
+            />
           </div>
         );
       }
-      const dates = tb.content.selectedDates || [];
-      const availability = tb.content.availability || [];
 
-      console.log('=== RENDERING TIMEBLOCK ===');
-      console.log('Block ID:', tb.id);
-      console.log('Dates:', dates);
-      console.log('Availability array:', availability);
-      console.log('Availability length:', availability.length);
+      // Availability mode
+      if (tb.content.mode === 'availability') {
+        const dates = tb.content.selectedDates || [];
+        const availability = tb.content.availability || [];
 
+        console.log('=== RENDERING TIMEBLOCK ===');
+        console.log('Block ID:', tb.id);
+        console.log('Dates:', dates);
+        console.log('Availability array:', availability);
+        console.log('Availability length:', availability.length);
+
+        return (
+          <div className="h-full overflow-auto">
+            <AvailabilityHeatmap
+              availability={availability}
+              dates={dates}
+              startTime={tb.content.startTime || '09:00'}
+              endTime={tb.content.endTime || '17:00'}
+              intervalMinutes={tb.content.intervalMinutes || 30}
+            />
+          </div>
+        );
+      }
+
+      // Fallback for other modes
       return (
-        <div className="h-full overflow-auto">
-          <AvailabilityHeatmap
-            availability={availability}
-            dates={dates}
-            startTime={tb.content.startTime || '09:00'}
-            endTime={tb.content.endTime || '17:00'}
-            intervalMinutes={tb.content.intervalMinutes || 30}
-          />
+        <div className="h-full flex flex-col">
+          <div className="text-sm font-medium text-gray-700">
+            {block.type.toUpperCase()} BLOCK
+          </div>
+          <div className="text-xs text-gray-500 mt-1">
+            {block.title || 'Untitled'}
+          </div>
+          <div className="text-xs text-gray-400 mt-2">
+            Mode "{tb.content.mode}" not yet implemented
+          </div>
         </div>
       );
     }
@@ -185,11 +204,26 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, onLayo
             className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden hover:border-[#75619D] transition-colors"
           >
             {isOrganizer && (
-              <div className="drag-handle bg-gray-50 border-b border-gray-200 px-3 py-2 flex items-center gap-2 cursor-move hover:bg-gray-100 transition-colors">
-                <GripVertical className="w-4 h-4 text-gray-400" />
-                <span className="text-xs font-medium text-gray-600">
-                  {block.title || block.type.toUpperCase()}
-                </span>
+              <div className="bg-gray-50 border-b border-gray-200 px-3 py-2 flex items-center justify-between hover:bg-gray-100 transition-colors">
+                <div className="drag-handle flex items-center gap-2 flex-1 cursor-move">
+                  <GripVertical className="w-4 h-4 text-gray-400" />
+                  <span className="text-xs font-medium text-gray-600">
+                    {block.title || block.type.toUpperCase()}
+                  </span>
+                </div>
+                <button
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (window.confirm('Are you sure you want to delete this block?')) {
+                      onBlockDelete?.(block.id);
+                    }
+                  }}
+                  className="p-1 hover:bg-gray-200 rounded transition-colors z-10"
+                  title="Delete block"
+                >
+                  <X className="w-4 h-4 text-gray-500 hover:text-gray-700" />
+                </button>
               </div>
             )}
             <div className={`p-4 ${isOrganizer ? 'h-[calc(100%-40px)]' : 'h-full'}`}>

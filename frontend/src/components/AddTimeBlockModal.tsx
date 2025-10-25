@@ -26,6 +26,7 @@ const TIMEZONES = [
 ];
 
 export default function AddTimeBlockModal({ isOpen, onClose, onConfirm, eventName, isDragging = false }: AddTimeBlockModalProps) {
+  const [mode, setMode] = useState<'availability' | 'fixed'>('availability');
   const [dateType, setDateType] = useState<'specific' | 'days'>('specific');
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [selectedDays, setSelectedDays] = useState<number[]>([]);
@@ -37,6 +38,11 @@ export default function AddTimeBlockModal({ isOpen, onClose, onConfirm, eventNam
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+
+  // For fixed mode
+  const [fixedDate, setFixedDate] = useState<Date>(new Date());
+  const [fixedStartTime, setFixedStartTime] = useState('09:00');
+  const [fixedEndTime, setFixedEndTime] = useState('17:00');
 
   const generateTimeOptions = () => {
     const times = [];
@@ -82,33 +88,48 @@ export default function AddTimeBlockModal({ isOpen, onClose, onConfirm, eventNam
   };
 
   const handleSubmit = async () => {
-    if (dateType === 'specific' && selectedDates.length === 0) {
-      alert('Please select at least one date');
-      return;
-    }
-    if (dateType === 'days' && selectedDays.length === 0) {
-      alert('Please select at least one day of the week');
-      return;
-    }
-
     setSubmitting(true);
 
-    const config: TimeBlockContent = {
-      mode: 'availability',
-      dateType,
-      startTime,
-      endTime,
-      timezone,
-      intervalMinutes,
-      availability: []
-    };
+    let config: TimeBlockContent;
 
-    if (dateType === 'specific') {
-      config.selectedDates = selectedDates
-        .map(d => d.toISOString().split('T')[0])
-        .sort();
+    if (mode === 'fixed') {
+      config = {
+        mode: 'fixed',
+        fixedDate: fixedDate.toISOString().split('T')[0],
+        fixedStartTime,
+        fixedEndTime,
+        fixedTimezone: timezone
+      };
     } else {
-      config.selectedDays = selectedDays;
+      // Availability mode
+      if (dateType === 'specific' && selectedDates.length === 0) {
+        alert('Please select at least one date');
+        setSubmitting(false);
+        return;
+      }
+      if (dateType === 'days' && selectedDays.length === 0) {
+        alert('Please select at least one day of the week');
+        setSubmitting(false);
+        return;
+      }
+
+      config = {
+        mode: 'availability',
+        dateType,
+        startTime,
+        endTime,
+        timezone,
+        intervalMinutes,
+        availability: []
+      };
+
+      if (dateType === 'specific') {
+        config.selectedDates = selectedDates
+          .map(d => d.toISOString().split('T')[0])
+          .sort();
+      } else {
+        config.selectedDays = selectedDays;
+      }
     }
 
     try {
@@ -160,15 +181,178 @@ export default function AddTimeBlockModal({ isOpen, onClose, onConfirm, eventNam
           {/* Form */}
           <div className="px-4 sm:px-6 py-4">
             <div className="mb-3">
-              <h2 className="text-xl font-bold text-gray-900">Configure Availability Grid</h2>
+              <h2 className="text-xl font-bold text-gray-900">
+                {mode === 'fixed' ? 'Set Fixed Date & Time' : 'Configure Availability Grid'}
+              </h2>
               <p className="text-xs text-gray-500 mt-0.5">
-                Select dates and times when participants can indicate their availability
+                {mode === 'fixed'
+                  ? 'Set a specific date and time for this event'
+                  : 'Select dates and times when participants can indicate their availability'
+                }
               </p>
             </div>
 
             <form className="space-y-3">
-              {/* Date Selection */}
+              {/* Mode Selection */}
               <div className="bg-white border border-gray-200 rounded-lg p-3">
+                <label className="block text-xs font-medium text-gray-700 mb-2">
+                  Schedule Type
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setMode('availability')}
+                    className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-all ${
+                      mode === 'availability'
+                        ? 'bg-[#75619D] text-white shadow-sm'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Availability Poll
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMode('fixed')}
+                    className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-all ${
+                      mode === 'fixed'
+                        ? 'bg-[#75619D] text-white shadow-sm'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Fixed Date/Time
+                  </button>
+                </div>
+              </div>
+
+              {mode === 'fixed' ? (
+                <>
+                  {/* Fixed Date */}
+                  <div className="bg-white border border-gray-200 rounded-lg p-3">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Date
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowDatePicker(true)}
+                      className="w-full px-3 py-1.5 border border-gray-300 rounded-md text-xs text-left
+                        hover:bg-gray-50 transition-colors flex items-center justify-between"
+                    >
+                      <span className="text-gray-900">
+                        {fixedDate.toLocaleDateString('en-US', {
+                          weekday: 'short',
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </span>
+                      <CalendarIcon className="w-4 h-4 text-gray-400" />
+                    </button>
+                  </div>
+
+                  {/* Fixed Time Range */}
+                  <div className="bg-white border border-gray-200 rounded-lg p-3">
+                    <label className="block text-xs font-medium text-gray-700 mb-2">
+                      <Clock className="w-3 h-3 inline mr-1" />
+                      Time
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <label className="block text-xs text-gray-500 mb-1 font-medium">Start</label>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => setShowStartTimePicker(!showStartTimePicker)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium
+                              bg-gray-50 hover:bg-white transition-colors text-left
+                              focus:outline-none focus:ring-2 focus:ring-[#75619D] focus:border-transparent
+                              flex items-center justify-between"
+                          >
+                            <span>{formatTime12Hour(fixedStartTime)}</span>
+                            <Clock className="w-4 h-4 text-gray-400" />
+                          </button>
+                          {showStartTimePicker && (
+                            <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                              {generateTimeOptions().map((time) => (
+                                <button
+                                  key={time.value}
+                                  type="button"
+                                  onClick={() => {
+                                    setFixedStartTime(time.value);
+                                    setShowStartTimePicker(false);
+                                  }}
+                                  className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors ${
+                                    time.value === fixedStartTime ? 'bg-[#4a3d63] text-white hover:bg-[#4a3d63]' : ''
+                                  }`}
+                                >
+                                  {time.label}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-xs text-gray-500 mb-1 font-medium">End</label>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => setShowEndTimePicker(!showEndTimePicker)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium
+                              bg-gray-50 hover:bg-white transition-colors text-left
+                              focus:outline-none focus:ring-2 focus:ring-[#75619D] focus:border-transparent
+                              flex items-center justify-between"
+                          >
+                            <span>{formatTime12Hour(fixedEndTime)}</span>
+                            <Clock className="w-4 h-4 text-gray-400" />
+                          </button>
+                          {showEndTimePicker && (
+                            <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                              {generateTimeOptions().map((time) => (
+                                <button
+                                  key={time.value}
+                                  type="button"
+                                  onClick={() => {
+                                    setFixedEndTime(time.value);
+                                    setShowEndTimePicker(false);
+                                  }}
+                                  className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors ${
+                                    time.value === fixedEndTime ? 'bg-[#4a3d63] text-white hover:bg-[#4a3d63]' : ''
+                                  }`}
+                                >
+                                  {time.label}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Timezone */}
+                  <div className="bg-white border border-gray-200 rounded-lg p-3">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      <Globe className="w-3 h-3 inline mr-1" />
+                      Timezone
+                    </label>
+                    <select
+                      value={timezone}
+                      onChange={(e) => setTimezone(e.target.value)}
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs
+                        focus:outline-none focus:ring-2 focus:ring-[#75619D] focus:border-transparent"
+                    >
+                      {TIMEZONES.map(tz => (
+                        <option key={tz} value={tz}>
+                          {tz.replace('_', ' ')}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Date Selection */}
+                  <div className="bg-white border border-gray-200 rounded-lg p-3">
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   Dates
                 </label>
@@ -284,6 +468,8 @@ export default function AddTimeBlockModal({ isOpen, onClose, onConfirm, eventNam
                   ))}
                 </select>
               </div>
+                </>
+              )}
 
               {/* Submit Buttons */}
               <div className="flex gap-2">
@@ -478,34 +664,52 @@ export default function AddTimeBlockModal({ isOpen, onClose, onConfirm, eventNam
 
             {/* Content */}
             <div className="p-4">
-              {/* Date Type Toggle */}
-              <div className="flex gap-2 mb-4">
-                <button
-                  type="button"
-                  onClick={() => setDateType('specific')}
-                  className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-all ${
-                    dateType === 'specific'
-                      ? 'bg-[#75619D] text-white shadow-sm'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Specific Dates
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDateType('days')}
-                  className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-all ${
-                    dateType === 'days'
-                      ? 'bg-[#75619D] text-white shadow-sm'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Days of the Week
-                </button>
-              </div>
+              {/* Date Type Toggle - Only show for availability mode */}
+              {mode === 'availability' && (
+                <div className="flex gap-2 mb-4">
+                  <button
+                    type="button"
+                    onClick={() => setDateType('specific')}
+                    className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-all ${
+                      dateType === 'specific'
+                        ? 'bg-[#75619D] text-white shadow-sm'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Specific Dates
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDateType('days')}
+                    className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-all ${
+                      dateType === 'days'
+                        ? 'bg-[#75619D] text-white shadow-sm'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Days of the Week
+                  </button>
+                </div>
+              )}
+
+              {/* Fixed Mode - Single Date */}
+              {mode === 'fixed' && (
+                <div className="flex justify-center">
+                  <DayPicker
+                    mode="single"
+                    selected={fixedDate}
+                    onSelect={(date) => date && setFixedDate(date)}
+                    numberOfMonths={1}
+                    className="border-0"
+                    classNames={{
+                      selected: "!bg-[#4a3d63] !text-white !font-semibold shadow-lg"
+                    }}
+                  />
+                </div>
+              )}
 
               {/* Specific Dates Calendar */}
-              {dateType === 'specific' && (
+              {mode === 'availability' && dateType === 'specific' && (
                 <div className="flex justify-center">
                   <DayPicker
                     mode="multiple"
@@ -521,7 +725,7 @@ export default function AddTimeBlockModal({ isOpen, onClose, onConfirm, eventNam
               )}
 
               {/* Days of Week Selection - Horizontal Circles */}
-              {dateType === 'days' && (
+              {mode === 'availability' && dateType === 'days' && (
                 <div className="flex flex-col items-center gap-3">
                   <div className="flex justify-center gap-2">
                     {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((letter, index) => (
@@ -552,11 +756,25 @@ export default function AddTimeBlockModal({ isOpen, onClose, onConfirm, eventNam
               )}
 
               {/* Selection Summary */}
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <p className="text-xs text-gray-600 text-center">
-                  {getDateSummary()}
-                </p>
-              </div>
+              {mode === 'availability' && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <p className="text-xs text-gray-600 text-center">
+                    {getDateSummary()}
+                  </p>
+                </div>
+              )}
+              {mode === 'fixed' && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <p className="text-xs text-gray-600 text-center">
+                    {fixedDate.toLocaleDateString('en-US', {
+                      weekday: 'short',
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    })}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Footer */}

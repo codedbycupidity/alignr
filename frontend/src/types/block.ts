@@ -44,7 +44,7 @@ export interface ParticipantAvailability {
 }
 
 export interface TimeBlockContent {
-  mode: 'availability' | 'voting'; // availability = When2Meet style, voting = simple poll
+  mode: 'availability' | 'voting' | 'fixed'; // availability = When2Meet style, voting = simple poll, fixed = organizer sets date/time
 
   // For availability mode
   dateType?: 'specific' | 'days';
@@ -58,6 +58,12 @@ export interface TimeBlockContent {
 
   // For voting mode
   options?: TimeOption[];
+
+  // For fixed mode
+  fixedDate?: string; // YYYY-MM-DD format
+  fixedStartTime?: string; // HH:MM
+  fixedEndTime?: string; // HH:MM
+  fixedTimezone?: string;
 }
 
 export interface TimeOption {

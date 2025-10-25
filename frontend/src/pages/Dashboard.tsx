@@ -29,11 +29,13 @@ export default function Dashboard() {
       const userEvents = await getUserEvents(user.id);
       setEvents(userEvents);
 
-      // Load participant counts for each event
+      // Load participant counts for each event (excluding organizer)
       const counts: Record<string, number> = {};
       for (const event of userEvents) {
         const participants = await getParticipants(event.id);
-        counts[event.id] = participants.length;
+        // Count only non-organizer participants
+        const nonOrganizerCount = participants.filter(p => p.id !== event.organizerId).length;
+        counts[event.id] = nonOrganizerCount;
       }
       setParticipantCounts(counts);
     } catch (error) {

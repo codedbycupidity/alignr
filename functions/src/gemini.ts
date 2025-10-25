@@ -55,13 +55,19 @@ Return ONLY a valid JSON array of suggestions, no additional text.
     const response = await result.response;
     const text = response.text();
 
+    console.log('=== GEMINI SUGGEST BLOCKS ===');
+    console.log('Prompt:', prompt);
+    console.log('Raw Response:', text);
+
     // Parse JSON from response
     const jsonMatch = text.match(/\[[\s\S]*\]/);
     if (!jsonMatch) {
+      console.error('No JSON array found in Gemini response');
       throw new Error('No JSON array found in response');
     }
 
     const suggestions = JSON.parse(jsonMatch[0]);
+    console.log('Parsed Suggestions:', JSON.stringify(suggestions, null, 2));
 
     return {
       success: true,

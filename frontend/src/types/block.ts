@@ -6,13 +6,21 @@ import { Timestamp } from 'firebase/firestore';
 
 export type BlockType = 'time' | 'location' | 'task' | 'note';
 
+export interface BlockLayout {
+  x: number; // Grid column position (0-11)
+  y: number; // Grid row position
+  w: number; // Width in grid units (1-12)
+  h: number; // Height in grid units
+}
+
 export interface Block {
   id: string;
   type: BlockType;
   title?: string;
   content: TimeBlockContent | LocationBlockContent | TaskBlockContent | NoteBlockContent;
-  votes: number;
+  order: number;
   author: string;
+  layout: BlockLayout; // Position and size on canvas
   createdAt: Timestamp;
   updatedAt?: Timestamp;
 }
@@ -21,8 +29,35 @@ export interface Block {
 // TIME BLOCK
 // ========================================
 
+export interface TimeSlot {
+  date: string; // YYYY-MM-DD format
+  startTime: string; // HH:MM format (24-hour)
+  endTime: string; // HH:MM format (24-hour)
+  available: boolean;
+}
+
+export interface ParticipantAvailability {
+  participantId: string;
+  participantName: string;
+  timeSlots: TimeSlot[];
+  submittedAt: Timestamp;
+}
+
 export interface TimeBlockContent {
-  options: TimeOption[];
+  mode: 'availability' | 'voting'; // availability = When2Meet style, voting = simple poll
+
+  // For availability mode
+  dateType?: 'specific' | 'days';
+  selectedDates?: string[]; // YYYY-MM-DD format
+  selectedDays?: number[]; // 0-6 for Sunday-Saturday
+  startTime?: string; // HH:MM
+  endTime?: string; // HH:MM
+  timezone?: string;
+  intervalMinutes?: number; // 15, 30, 60
+  availability?: ParticipantAvailability[]; // Stored directly in block
+
+  // For voting mode
+  options?: TimeOption[];
 }
 
 export interface TimeOption {

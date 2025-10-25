@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Calendar, AlertCircle, Loader2, Users, Clock, Eye } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { getEvent, addParticipant, findParticipantByName, verifyParticipantPassword } from '../services/events';
+import { getEvent, addParticipant, findParticipantByName, verifyParticipantPassword, getBlocks } from '../services/events';
 import { saveParticipantAvailability, getParticipantAvailability } from '../services/availability';
 import type { EventData } from '../services/events';
 import type { TimeSlot } from '../types/availability';
+import type { TimeBlock } from '../types/block';
 import AvailabilityGrid from '../components/AvailabilityGrid';
 
 export default function JoinEvent() {
@@ -13,6 +14,7 @@ export default function JoinEvent() {
   const navigate = useNavigate();
 
   const [event, setEvent] = useState<EventData | null>(null);
+  const [timeBlock, setTimeBlock] = useState<TimeBlock | null>(null);
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [availability, setAvailability] = useState<TimeSlot[]>([]);
@@ -44,6 +46,17 @@ export default function JoinEvent() {
         setError('This event is private');
       } else {
         setEvent(eventData);
+
+        // Load blocks to find TimeBlock with availability mode
+        const blocks = await getBlocks(eventId!);
+        const timeBlockData = blocks.find(
+          (block): block is TimeBlock =>
+            block.type === 'time' && block.content.mode === 'availability'
+        );
+
+        if (timeBlockData) {
+          setTimeBlock(timeBlockData);
+        }
       }
     } catch (err: any) {
       setError(err.message || 'Failed to load event');
@@ -64,7 +77,7 @@ export default function JoinEvent() {
       const existingParticipant = await findParticipantByName(eventId, name.trim());
 
       if (existingParticipant) {
-        // Name already exists - they must provide correct password
+        // Name already exists
         if (existingParticipant.password) {
           // Password is set - verify it
           if (!password) {
@@ -78,20 +91,22 @@ export default function JoinEvent() {
             setSubmitting(false);
             return;
           }
-        } else {
-          // Name exists but no password set - don't allow someone else to edit
-          setError('This name is already taken. Please choose a different name or contact the participant for their password.');
-          setSubmitting(false);
-          return;
         }
+        // If no password is set, allow editing without password
 
-        // Load existing availability for this participant
+        // Load existing availability for this participant from TimeBlock
         console.log('Loading existing availability for participant:', existingParticipant.id);
         setExistingParticipantId(existingParticipant.id);
-        const existingAvailability = await getParticipantAvailability(eventId, existingParticipant.id);
-        if (existingAvailability.length > 0) {
-          console.log('Found existing availability:', existingAvailability.length, 'slots');
-          setInitialAvailability(existingAvailability);
+
+        if (timeBlock && timeBlock.content.availability) {
+          const participantAvailability = timeBlock.content.availability.find(
+            a => a.participantId === existingParticipant.id
+          );
+
+          if (participantAvailability && participantAvailability.timeSlots) {
+            console.log('Found existing availability:', participantAvailability.timeSlots.length, 'slots');
+            setInitialAvailability(participantAvailability.timeSlots);
+          }
         }
       }
 
@@ -106,7 +121,7 @@ export default function JoinEvent() {
   };
 
   const handleJoin = async () => {
-    if (!eventId || !event) return;
+    if (!eventId || !event || !timeBlock) return;
 
     setError('');
     setSubmitting(true);
@@ -124,12 +139,47 @@ export default function JoinEvent() {
         console.log('New participant added:', participantId);
       }
 
-      // Save availability - only save slots that are marked as available
+      // Save availability to TimeBlock
       const availableSlots = availability.filter(slot => slot.available);
-      if (availableSlots.length > 0) {
-        console.log('Saving availability:', availableSlots.length, 'slots');
-        await saveParticipantAvailability(eventId, participantId, name.trim(), availableSlots);
-      }
+      console.log('=== SAVING AVAILABILITY ===');
+      console.log('Available slots:', availableSlots.length, 'slots');
+      console.log('TimeBlock ID:', timeBlock.id);
+      console.log('Participant ID:', participantId);
+      console.log('Participant Name:', name.trim());
+
+      // Update the TimeBlock's availability array
+      const currentAvailability = timeBlock.content.availability || [];
+      console.log('Current availability:', currentAvailability);
+
+      // Remove existing submission from this participant
+      const otherParticipants = currentAvailability.filter(
+        a => a.participantId !== participantId
+      );
+      console.log('Other participants:', otherParticipants);
+
+      // Add new submission
+      const updatedAvailability = [
+        ...otherParticipants,
+        {
+          participantId,
+          participantName: name.trim(),
+          timeSlots: availableSlots,
+          submittedAt: new Date()
+        }
+      ];
+
+      console.log('Updated availability array:', updatedAvailability);
+
+      // Update the block
+      const { updateBlock } = await import('../services/events');
+      await updateBlock(eventId, timeBlock.id, {
+        content: {
+          ...timeBlock.content,
+          availability: updatedAvailability
+        }
+      });
+
+      console.log('✅ Block updated successfully');
 
       navigate(`/event/${eventId}`);
     } catch (err: any) {
@@ -173,9 +223,11 @@ export default function JoinEvent() {
     );
   }
 
-  const eventDates = event?.selectedDates || [];
-  const eventStartTime = event?.startTime || '09:00';
-  const eventEndTime = event?.endTime || '17:00';
+  // Get time/date data from TimeBlock instead of event
+  const eventDates = timeBlock?.content.selectedDates || [];
+  const eventStartTime = timeBlock?.content.startTime || '09:00';
+  const eventEndTime = timeBlock?.content.endTime || '17:00';
+  const intervalMinutes = timeBlock?.content.intervalMinutes || 30;
 
   return (
     <div className="min-h-screen bg-white px-4 py-12">
@@ -351,16 +403,22 @@ export default function JoinEvent() {
                 </div>
               )}
 
-              {eventDates.length > 0 && (
+              {eventDates.length > 0 ? (
                 <div className="mb-4">
                   <AvailabilityGrid
                     dates={eventDates}
                     startTime={eventStartTime}
                     endTime={eventEndTime}
-                    intervalMinutes={30}
+                    intervalMinutes={intervalMinutes}
                     initialAvailability={initialAvailability}
                     onAvailabilityChange={setAvailability}
                   />
+                </div>
+              ) : (
+                <div className="mb-4 p-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
+                  <p className="text-sm text-gray-600">
+                    The organizer hasn't set up availability tracking for this event yet.
+                  </p>
                 </div>
               )}
 

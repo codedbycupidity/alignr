@@ -1,9 +1,8 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 @layer base {
   body {
-    @apply bg-bright-gray text-black-coffee;
+    background-color: #E6EFF7;
+    color: #3A2D34;
   }
 }

@@ -209,6 +209,39 @@ export async function getParticipants(eventId: string): Promise<ParticipantData[
   return participants;
 }
 
+// Check if participant name exists and get their data
+export async function findParticipantByName(
+  eventId: string,
+  name: string
+): Promise<(ParticipantData & { password?: string }) | null> {
+  const eventRef = doc(db, 'events', eventId);
+  const participantsSnap = await getDocs(collection(eventRef, 'participants'));
+
+  let foundParticipant: (ParticipantData & { password?: string }) | null = null;
+
+  participantsSnap.forEach(doc => {
+    const data = doc.data();
+    if (data.name === name) {
+      foundParticipant = data as (ParticipantData & { password?: string });
+    }
+  });
+
+  return foundParticipant;
+}
+
+// Verify participant password
+export function verifyParticipantPassword(
+  participant: { password?: string },
+  providedPassword: string
+): boolean {
+  // If participant has no password, any password is invalid
+  if (!participant.password) {
+    return false;
+  }
+  // Simple string comparison (in production, use proper hashing)
+  return participant.password === providedPassword;
+}
+
 // Add block to event
 export async function addBlock(
   eventId: string,

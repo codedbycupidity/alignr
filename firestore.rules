@@ -44,6 +44,19 @@ service cloud.firestore {
         allow delete: if request.auth != null &&
                          request.auth.uid == get(/databases/$(database)/documents/events/$(eventId)).data.organizerId;
       }
+
+      // Availability subcollection
+      match /availability/{participantId} {
+        // Anyone can read availability of public events
+        allow read: if get(/databases/$(database)/documents/events/$(eventId)).data.isPublic == true;
+
+        // Participants can create/update their own availability
+        allow create, update: if true;
+
+        // Only organizer can delete availability
+        allow delete: if request.auth != null &&
+                         request.auth.uid == get(/databases/$(database)/documents/events/$(eventId)).data.organizerId;
+      }
     }
   }
 }

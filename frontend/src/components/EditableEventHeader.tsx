@@ -12,7 +12,7 @@ interface EditableEventHeaderProps {
   timeBlock: TimeBlock | null;
   fixedTimeBlock?: TimeBlock | null;
   participantCount?: number;
-  nameInputRef: RefObject<HTMLInputElement>;
+  nameInputRef: RefObject<HTMLInputElement | null>;
   onNameChange: (name: string) => void;
   onSaveName: () => void;
   onCancelEdit: () => void;

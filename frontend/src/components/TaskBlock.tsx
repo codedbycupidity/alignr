@@ -1,4 +1,4 @@
-import { CheckSquare, Square, Plus, X, User } from 'lucide-react';
+import { CheckSquare, Plus, X, User } from 'lucide-react';
 import { useState } from 'react';
 import type { Task } from '../types/block';
 
@@ -39,13 +39,6 @@ export default function TaskBlock({
     setShowAddTask(false);
   };
 
-  const handleToggleComplete = (taskId: string) => {
-    const updatedTasks = tasks.map(task =>
-      task.id === taskId ? { ...task, completed: !task.completed } : task
-    );
-    onTasksChange?.(updatedTasks);
-  };
-
   const handleClaimTask = (taskId: string) => {
     if (!currentUserId || !currentUserName) return;
 
@@ -54,6 +47,7 @@ export default function TaskBlock({
         const isUnclaiming = task.claimedBy === currentUserId;
         if (isUnclaiming) {
           // Remove claimedBy field entirely when unclaiming
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { claimedBy, ...taskWithoutClaim } = task;
           return taskWithoutClaim;
         } else {

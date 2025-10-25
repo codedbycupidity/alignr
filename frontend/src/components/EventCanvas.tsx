@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import GridLayout, { Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
-import type { Block, TimeBlock, LocationBlock, BudgetBlock as BudgetBlockType, TaskBlock as TaskBlockType, BlockLayout } from '../types/block';
+import { Timestamp } from 'firebase/firestore';
+import type { Block, TimeBlock, LocationBlock as LocationBlockType, BudgetBlock as BudgetBlockType, TaskBlock as TaskBlockType, BlockLayout } from '../types/block';
 import AvailabilityHeatmap from './AvailabilityHeatmap';
 import LocationBlock from './LocationBlock';
 import BudgetBlock from './BudgetBlock';
@@ -87,7 +88,10 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, onLayo
       // Availability mode
       if (tb.content.mode === 'availability') {
         const dates = tb.content.selectedDates || [];
-        const availability = tb.content.availability || [];
+        const availability = (tb.content.availability || []).map(a => ({
+          ...a,
+          submittedAt: a.submittedAt.toDate()
+        }));
 
         console.log('=== RENDERING TIMEBLOCK ===');
         console.log('Block ID:', tb.id);
@@ -128,7 +132,7 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, onLayo
 
     // Render LocationBlock
     if (block.type === 'location') {
-      const lb = block as LocationBlock;
+      const lb = block as LocationBlockType;
       return (
         <div className="h-full overflow-auto">
           <LocationBlock
@@ -178,7 +182,7 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, onLayo
                   participantId: currentUserId,
                   participantName: currentUserName,
                   budgetLevel,
-                  submittedAt: new Date() as any
+                  submittedAt: Timestamp.now()
                 }
               ];
 

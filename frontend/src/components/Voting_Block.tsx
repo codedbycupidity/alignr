@@ -14,11 +14,13 @@ interface VotingBlockProps {
   onChange?: (options: VotingOption[]) => void;
 }
 
-export default function VotingBlock({ 
-  title = 'Vote', 
+export default function VotingBlock({
+  title = 'Vote',
   options = [{ text: 'Option 1', votes: 0, voters: [] }],
+  // editable prop is reserved for future use
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   editable = true,
-  onChange 
+  onChange
 }: VotingBlockProps) {
   const [pollOptions, setPollOptions] = useState<VotingOption[]>(options);
   const [newOption, setNewOption] = useState('');

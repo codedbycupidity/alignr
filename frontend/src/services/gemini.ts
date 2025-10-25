@@ -22,7 +22,7 @@ export async function suggestBlocks(event: EventData): Promise<BlockSuggestion[]
       description: event.description
     });
 
-    const data = result.data as { success: boolean; data?: any[]; error?: string };
+    const data = result.data as { success: boolean; data?: BlockSuggestion[]; error?: string };
 
     if (!data.success || !data.data) {
       throw new Error(data.error || 'Failed to get block suggestions');
@@ -46,7 +46,7 @@ export async function suggestBlocks(event: EventData): Promise<BlockSuggestion[]
 /**
  * Call Gemini (via Firebase Functions) to suggest content for a specific block type
  */
-export async function suggestBlockContent(blockType: BlockType, eventName: string, participantCount?: number): Promise<any[]> {
+export async function suggestBlockContent(blockType: BlockType, eventName: string, participantCount?: number): Promise<unknown[]> {
   try {
     const suggestContentFn = httpsCallable(functions, 'suggestBlockContent');
     const result = await suggestContentFn({
@@ -55,7 +55,7 @@ export async function suggestBlockContent(blockType: BlockType, eventName: strin
       participantCount
     });
 
-    const data = result.data as { success: boolean; data?: any[]; error?: string };
+    const data = result.data as { success: boolean; data?: unknown[]; error?: string };
 
     if (!data.success || !data.data) {
       throw new Error(data.error || 'Failed to get content suggestions');

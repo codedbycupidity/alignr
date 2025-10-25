@@ -41,7 +41,7 @@ export default function LocationBlock({
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const autocompleteService = useRef<google.maps.places.AutocompleteService | null>(null);
   const placesService = useRef<google.maps.places.PlacesService | null>(null);
-  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Handle click outside to close suggestions
   useEffect(() => {
@@ -151,7 +151,7 @@ export default function LocationBlock({
     if (googleLoaded && autocompleteService.current) {
       setIsLoadingGoogle(true);
       try {
-        const request: any = {
+        const request: google.maps.places.AutocompletionRequest = {
           input: query,
           types: ['establishment', 'geocode']
         };

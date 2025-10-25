@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { getEvent, getBlocks, addBlock, updateEvent, updateBlock, deleteBlock, getParticipants } from '../services/events';
 import { suggestBlocks, type BlockSuggestion } from '../services/gemini';
 import type { EventData } from '../services/events';
-import type { Block, TimeBlock, TimeBlockContent, BlockLayout, LocationBlock, BudgetBlock, TaskBlock as TaskBlockType, Task } from '../types/block';
+import type { Block, TimeBlock, TimeBlockContent, BlockLayout } from '../types/block';
 import EventCanvas from '../components/EventCanvas';
 import AddTimeBlockModal from '../components/AddTimeBlockModal';
 import TaskSuggestionsModal from '../components/TaskSuggestionsModal';
@@ -25,7 +25,7 @@ export default function PlanView() {
   const [editingName, setEditingName] = useState(false);
   const [eventName, setEventName] = useState('');
   const [savingName, setSavingName] = useState(false);
-  const nameInputRef = useRef<HTMLInputElement>(null);
+  const nameInputRef = useRef<HTMLInputElement | null>(null);
   const [draggingSuggestion, setDraggingSuggestion] = useState<BlockSuggestion | null>(null);
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -250,9 +250,8 @@ export default function PlanView() {
       console.log('Opening task suggestions modal');
       setShowTaskSuggestionsModal(true);
     } else if (suggestion.blockType === 'location') {
-      const newBlock: LocationBlock = {
-        id: `block-${Date.now()}`,
-        type: 'location',
+      const newBlock = {
+        type: 'location' as const,
         content: {
           options: []
         },
@@ -261,16 +260,17 @@ export default function PlanView() {
           y: blocks.length * 2,
           w: 6,
           h: 3
-        }
+        },
+        order: blocks.length,
+        author: user?.id || participantId || 'anonymous'
       };
       await addBlock(id, newBlock);
       const updatedBlocks = await getBlocks(id);
       setBlocks(updatedBlocks);
       setSuggestions([]);
     } else if (suggestion.blockType === 'budget') {
-      const newBlock: BudgetBlock = {
-        id: `block-${Date.now()}`,
-        type: 'budget',
+      const newBlock = {
+        type: 'budget' as const,
         content: {
           responses: []
         },
@@ -279,7 +279,9 @@ export default function PlanView() {
           y: blocks.length * 2,
           w: 4,
           h: 3
-        }
+        },
+        order: blocks.length,
+        author: user?.id || participantId || 'anonymous'
       };
       await addBlock(id, newBlock);
       const updatedBlocks = await getBlocks(id);
@@ -399,9 +401,8 @@ export default function PlanView() {
                 setShowTimeBlockModal(true);
               } else if (blockType === 'location') {
                 // Add empty location block
-                const newBlock: LocationBlock = {
-                  id: `block-${Date.now()}`,
-                  type: 'location',
+                const newBlock = {
+                  type: 'location' as const,
                   content: {
                     options: []
                   },
@@ -410,16 +411,17 @@ export default function PlanView() {
                     y: blocks.length * 2,
                     w: 6,
                     h: 3
-                  }
+                  },
+                  order: blocks.length,
+                  author: user?.id || participantId || 'anonymous'
                 };
                 await addBlock(id!, newBlock);
                 const updatedBlocks = await getBlocks(id!);
                 setBlocks(updatedBlocks);
               } else if (blockType === 'budget') {
                 // Add empty budget block
-                const newBlock: BudgetBlock = {
-                  id: `block-${Date.now()}`,
-                  type: 'budget',
+                const newBlock = {
+                  type: 'budget' as const,
                   content: {
                     responses: []
                   },
@@ -428,7 +430,9 @@ export default function PlanView() {
                     y: blocks.length * 2,
                     w: 4,
                     h: 3
-                  }
+                  },
+                  order: blocks.length,
+                  author: user?.id || participantId || 'anonymous'
                 };
                 await addBlock(id!, newBlock);
                 const updatedBlocks = await getBlocks(id!);
@@ -574,9 +578,8 @@ export default function PlanView() {
 
             setAddingTaskBlock(true);
             try {
-              const newBlock: TaskBlockType = {
-                id: `block-${Date.now()}`,
-                type: 'task',
+              const newBlock = {
+                type: 'task' as const,
                 content: {
                   tasks
                 },
@@ -585,7 +588,9 @@ export default function PlanView() {
                   y: blocks.length * 2,
                   w: 5,
                   h: 4
-                }
+                },
+                order: blocks.length,
+                author: user?.id || participantId || 'anonymous'
               };
 
               await addBlock(id, newBlock);
@@ -601,9 +606,8 @@ export default function PlanView() {
 
             setAddingTaskBlock(true);
             try {
-              const newBlock: TaskBlockType = {
-                id: `block-${Date.now()}`,
-                type: 'task',
+              const newBlock = {
+                type: 'task' as const,
                 content: {
                   tasks: []
                 },
@@ -612,7 +616,9 @@ export default function PlanView() {
                   y: blocks.length * 2,
                   w: 5,
                   h: 4
-                }
+                },
+                order: blocks.length,
+                author: user?.id || participantId || 'anonymous'
               };
 
               await addBlock(id, newBlock);

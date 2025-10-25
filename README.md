@@ -28,9 +28,15 @@ When you create an event, Gemini analyzes the type and auto-suggests relevant bl
 - **No login required** — participants join with just a display name
 - **One shareable link** per event
 
-### Calendar Integration
-- Export finalized plans to Google Calendar
-- Optional calendar API integration (Cronofy) for availability checking
+### Universal Calendar Export
+Instantly export finalized plans to personal calendar apps with one click:
+- **"Add to Calendar" button** — Generates universal `.ics` file compatible with:
+  - Google Calendar
+  - Apple Calendar
+  - Microsoft Outlook
+  - Any mobile calendar app
+- **Seamless sync** — Take your final plan outside Alignr into the tools you already use
+- **Optional availability checking** — Cronofy API integration to find free time slots across participants
 
 ### AI-Powered Event Insights (Snowflake)
 When an event is finalized, aggregated participation data is sent to Snowflake for intelligent analysis:

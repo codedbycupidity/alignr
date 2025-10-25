@@ -1,91 +1,101 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Calendar, Plus, Users, Clock, MapPin, CheckCircle, Settings, LogOut } from 'lucide-react';
-
-//Mock data (replace with Firebase data later)
-const mockEvents = [
-  {
-    id: '1',
-    name: 'Birthday Party',
-    date: '2025-11-15',
-    participants: 8,
-    status: 'planning',
-    location: 'TBD',
-    lastUpdated: '2 hours ago',
-  },
-  {
-    id: '2',
-    name: 'Team Offsite Meeting',
-    date: '2025-11-20',
-    participants: 12,
-    status: 'finalized',
-    location: 'Cafe Java',
-    lastUpdated: '1 day ago',
-  },
-  {
-    id: '3',
-    name: 'Weekend Hiking Trip',
-    date: '2025-11-25',
-    participants: 6,
-    status: 'planning',
-    location: 'Blue Ridge Mountains',
-    lastUpdated: '3 hours ago',
-  },
-];
+import { Calendar, Plus, Users, Clock, CheckCircle2, Settings, LogOut, Loader2 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { getUserEvents, getParticipants } from '../services/events';
+import type { EventData } from '../services/events';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [events] = useState(mockEvents);
+  const { user, logout } = useAuth();
+  const [events, setEvents] = useState<EventData[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [participantCounts, setParticipantCounts] = useState<Record<string, number>>({});
 
-  const handleLogout = () => {
-    // TODO: Add Firebase logout
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    loadEvents();
+  }, [user]);
+
+  const loadEvents = async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+      const userEvents = await getUserEvents(user.id);
+      setEvents(userEvents);
+
+      // Load participant counts for each event
+      const counts: Record<string, number> = {};
+      for (const event of userEvents) {
+        const participants = await getParticipants(event.id);
+        counts[event.id] = participants.length;
+      }
+      setParticipantCounts(counts);
+    } catch (error) {
+      console.error('Error loading events:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await logout();
     navigate('/login');
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-[#F9F9FB]">
-      
-      {/*Navbar with frosted glass*/}
-      <nav className="bg-white/70 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-6 lg:px-8">
-          <div className="flex justify-between items-center h-14">
-            
+    <div className="min-h-screen bg-white">
+
+      {/* Navbar */}
+      <nav className="border-b border-gray-200 sticky top-0 z-50 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+
             {/* Logo */}
-            <Link to="/" className="flex items-center space-x-2.5">
-              <div className="w-7 h-7 bg-[#5A3FFF] rounded-lg flex items-center justify-center shadow-sm">
-                <Calendar className="w-4 h-4 text-white" strokeWidth={2.5} />
+            <Link to="/" className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-[#75619D] rounded-md flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-white" strokeWidth={2} />
               </div>
-              <span className="text-xl font-semibold text-[#5A3FFF] tracking-tight">Alignr</span>
+              <span className="text-lg font-semibold text-[#75619D]">Alignr</span>
             </Link>
 
-            {/*User menu*/}
+            {/* User menu */}
             <div className="relative">
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex items-center space-x-2.5 hover:bg-gray-50/80 rounded-lg px-3 py-1.5 transition-all duration-200 ease-out"
+                className="flex items-center space-x-2 hover:bg-gray-100 rounded-md px-3 py-2 transition-colors"
               >
-                <div className="w-7 h-7 bg-[#5A3FFF] rounded-full flex items-center justify-center shadow-sm">
-                  <span className="text-white font-medium text-xs">JD</span>
+                <div className="w-8 h-8 bg-[#75619D] rounded-full flex items-center justify-center">
+                  <span className="text-white font-medium text-xs">
+                    {user?.email?.substring(0, 2).toUpperCase() || 'U'}
+                  </span>
                 </div>
-                <span className="text-sm font-medium text-gray-600 hidden sm:block">John Doe</span>
+                <span className="text-sm font-medium text-gray-700 hidden sm:block">
+                  {user?.email || 'User'}
+                </span>
               </button>
 
-              {/*Dropdown with soft glide animation*/}
+              {/* Dropdown */}
               {showUserMenu && (
-                <div className="absolute right-0 mt-1.5 w-44 bg-white rounded-xl shadow-lg border border-[#E5E5EB] py-1.5 z-10 transition-all duration-200 ease-out origin-top-right scale-100 opacity-100">
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-10">
                   <Link
                     to="/settings"
-                    className="flex items-center space-x-2.5 px-3.5 py-2 text-sm text-gray-700 hover:bg-[#F9F9FB] transition-colors duration-150 mx-1 rounded-lg"
+                    className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                   >
-                    <Settings className="w-3.5 h-3.5 text-[#5A3FFF]" strokeWidth={2} />
+                    <Settings className="w-4 h-4" />
                     <span>Settings</span>
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center space-x-2.5 px-3.5 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-150 mx-1 rounded-lg"
+                    className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                   >
-                    <LogOut className="w-3.5 h-3.5" strokeWidth={2} />
+                    <LogOut className="w-4 h-4" />
                     <span>Log Out</span>
                   </button>
                 </div>
@@ -95,162 +105,167 @@ export default function Dashboard() {
         </div>
       </nav>
 
-      {/*Main content*/}
-      <div className="max-w-6xl mx-auto px-6 lg:px-8 py-12">
-        
-        {/*Header*/}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-12">
+      {/* Main content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-[#5A3FFF] leading-tight">
-              My Plans
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+              Plans
             </h1>
-            <p className="text-sm text-gray-600 mt-1.5 leading-relaxed">
-              Manage all your group events in one place
+            <p className="text-sm text-gray-500 mt-1">
+              Manage all your events in one place
             </p>
           </div>
           <Link
-            to="/create"
-            className="mt-4 sm:mt-0 bg-gradient-to-r from-[#5A3FFF] to-[#6E53FF] text-white px-5 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all duration-500 ease-out font-medium text-sm hover:scale-[1.015]"
+            to="/event/create"
+            className="mt-4 sm:mt-0 inline-flex items-center gap-2 bg-[#75619D] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#75619D]/90 transition-colors"
           >
-            Create New Plan
+            <Plus className="w-4 h-4" />
+            New Plan
           </Link>
         </div>
 
-        {/*Stats cards*/}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-12">
-          
-          {/*Total plans*/}
-          <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6 hover:-translate-y-[2px] hover:shadow-lg transition-all duration-300 ease-out">
+        {/* Stats cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+
+          {/* Total plans */}
+          <div className="bg-white border border-gray-200 rounded-lg p-6 hover:border-[#BEAEDB] transition-colors">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-wide text-gray-500 font-medium mb-2">
+                <p className="text-sm font-medium text-gray-500">
                   Total Plans
                 </p>
-                <p className="text-4xl font-semibold text-[#5A3FFF] tracking-tight">
+                <p className="text-2xl font-bold text-gray-900 mt-1">
                   {events.length}
                 </p>
               </div>
-              <div className="w-11 h-11 bg-[#EDE9FE] rounded-xl flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-[#5A3FFF]" strokeWidth={2} />
+              <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center">
+                <Calendar className="w-6 h-6 text-gray-600" strokeWidth={2} />
               </div>
             </div>
           </div>
 
-          {/*Active plans*/}
-          <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6 hover:-translate-y-[2px] hover:shadow-lg transition-all duration-300 ease-out">
+          {/* Active plans */}
+          <div className="bg-white border border-gray-200 rounded-lg p-6 hover:border-[#BEAEDB] transition-colors">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-wide text-gray-500 font-medium mb-2">
-                  Active Plans
+                <p className="text-sm font-medium text-gray-500">
+                  Active
                 </p>
-                <p className="text-4xl font-semibold text-orange-500 tracking-tight">
-                  {events.filter(e => e.status === 'planning').length}
+                <p className="text-2xl font-bold text-gray-900 mt-1">
+                  {events.filter(e => e.status === 'draft' || e.status === 'active').length}
                 </p>
               </div>
-              <div className="w-11 h-11 bg-orange-50 rounded-xl flex items-center justify-center">
-                <Clock className="w-5 h-5 text-orange-500" strokeWidth={2} />
+              <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center">
+                <Clock className="w-6 h-6 text-gray-600" strokeWidth={2} />
               </div>
             </div>
           </div>
 
-          {/*Finalized plans*/}
-          <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6 hover:-translate-y-[2px] hover:shadow-lg transition-all duration-300 ease-out">
+          {/* Finalized plans */}
+          <div className="bg-white border border-gray-200 rounded-lg p-6 hover:border-[#BEAEDB] transition-colors">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-wide text-gray-500 font-medium mb-2">
-                  Finalized Plans
+                <p className="text-sm font-medium text-gray-500">
+                  Completed
                 </p>
-                <p className="text-4xl font-semibold text-green-600 tracking-tight">
+                <p className="text-2xl font-bold text-gray-900 mt-1">
                   {events.filter(e => e.status === 'finalized').length}
                 </p>
               </div>
-              <div className="w-11 h-11 bg-green-50 rounded-xl flex items-center justify-center">
-                <CheckCircle className="w-5 h-5 text-green-600" strokeWidth={2} />
+              <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center">
+                <CheckCircle2 className="w-6 h-6 text-gray-600" strokeWidth={2} />
               </div>
             </div>
           </div>
         </div>
 
-        {/*Events list*/}
-        <div className="bg-white border border-[#E5E5EB] shadow-sm rounded-2xl overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100">
-            <h2 className="text-lg font-semibold text-[#1E1E1E] tracking-tight">
-              Recent Plans
+        {/* Events list */}
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-base font-semibold text-gray-900">
+              Your Plans
             </h2>
           </div>
 
-          {events.length === 0 ? (
-            <div className="text-center py-20">
-              <div className="w-16 h-16 bg-[#F9F9FB] rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Calendar className="w-8 h-8 text-gray-300" strokeWidth={1.5} />
+          {loading ? (
+            <div className="text-center py-12">
+              <Loader2 className="w-8 h-8 text-gray-400 animate-spin mx-auto mb-3" />
+              <p className="text-sm text-gray-500">Loading events...</p>
+            </div>
+          ) : events.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center mx-auto mb-3">
+                <Calendar className="w-6 h-6 text-gray-400" />
               </div>
-              <h3 className="text-base font-semibold text-gray-800 mb-2">No plans yet</h3>
-              <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+              <h3 className="text-sm font-medium text-gray-900 mb-1">No events yet</h3>
+              <p className="text-sm text-gray-500 mb-4">
                 Create your first event to get started
               </p>
               <Link
-                to="/create"
-                className="inline-flex items-center bg-gradient-to-r from-[#5A3FFF] to-[#6E53FF] text-white px-6 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 ease-out font-medium text-sm"
+                to="/event/create"
+                className="inline-flex items-center gap-2 bg-[#75619D] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#75619D]/90 transition-colors"
               >
-                Create Your First Plan
+                <Plus className="w-4 h-4" />
+                Create Event
               </Link>
             </div>
           ) : (
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-gray-200">
               {events.map((event) => (
                 <div
                   key={event.id}
-                  className="px-6 py-5 hover:bg-[#F9F9FB] transition-all duration-300 ease-out cursor-pointer group hover:-translate-y-[1px]"
-                  onClick={() => navigate(`/host/${event.id}`)}
+                  className="px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                  onClick={() => navigate(`/event/${event.id}`)}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2.5">
-                        <h3 className="text-base font-semibold text-[#1E1E1E] leading-tight group-hover:text-[#5A3FFF] transition-colors duration-200">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-sm font-medium text-gray-900 truncate">
                           {event.name}
                         </h3>
                         <span
-                          className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            event.status === 'planning'
-                              ? 'bg-[#FFF5ED] text-orange-600'
-                              : 'bg-[#F0FDF4] text-green-700'
+                          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                            event.status === 'finalized'
+                              ? 'bg-gray-100 text-gray-700'
+                              : 'bg-[#BEAEDB]/20 text-[#75619D]'
                           }`}
                         >
-                          {event.status === 'planning' ? 'Planning' : 'Finalized'}
+                          {event.status === 'finalized' ? 'Completed' : 'Active'}
                         </span>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
-                        <div className="flex items-center space-x-1.5">
-                          <Calendar className="w-3.5 h-3.5" strokeWidth={2} />
-                          <span className="font-normal">{new Date(event.date).toLocaleDateString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric', 
-                            year: 'numeric' 
-                          })}</span>
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <div className="flex items-center gap-1.5">
+                          <Calendar className="w-3.5 h-3.5" />
+                          <span>{event.createdAt?.toDate?.().toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                          }) || 'No date'}</span>
                         </div>
-                        <div className="flex items-center space-x-1.5">
-                          <Users className="w-3.5 h-3.5" strokeWidth={2} />
-                          <span className="font-normal">{event.participants} participants</span>
+                        <div className="flex items-center gap-1.5">
+                          <Users className="w-3.5 h-3.5" />
+                          <span>{participantCounts[event.id] || 0} participants</span>
                         </div>
-                        <div className="flex items-center space-x-1.5">
-                          <MapPin className="w-3.5 h-3.5" strokeWidth={2} />
-                          <span className="font-normal">{event.location}</span>
-                        </div>
+                        {event.eventType && (
+                          <span className="text-gray-400">{event.eventType.replace('_', ' ')}</span>
+                        )}
                       </div>
                     </div>
 
-                    <div className="text-right hidden sm:block">
-                      <p className="text-xs text-gray-400 mb-2 leading-relaxed">
-                        Updated {event.lastUpdated}
+                    <div className="text-right ml-4 hidden sm:block">
+                      <p className="text-xs text-gray-400 mb-1">
+                        Updated {event.updatedAt?.toDate?.().toLocaleDateString() || 'recently'}
                       </p>
                       <Link
-                        to={`/host/${event.id}`}
-                        className="text-[#5A3FFF] hover:text-[#3E2EB2] font-medium text-sm inline-flex items-center space-x-1 transition-colors duration-200"
+                        to={`/event/${event.id}`}
+                        className="text-sm font-medium text-[#75619D] hover:text-[#75619D]/80 transition-colors"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <span>Manage</span>
-                        <span className="group-hover:translate-x-0.5 transition-transform duration-200">→</span>
+                        View →
                       </Link>
                     </div>
                   </div>
@@ -260,38 +275,6 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/*Quick actions*/}
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-5">
-          
-          {/*Guide card with soft gradient*/}
-          <div className="bg-gradient-to-br from-[#6B3EFF]/10 via-[#6B3EFF]/5 to-white border border-[#E5E5EB] rounded-2xl shadow-sm p-8 hover:shadow-md transition-all duration-300 ease-out">
-            <h3 className="text-lg font-semibold text-[#1E1E1E] mb-2 leading-tight">
-              Need help getting started?
-            </h3>
-            <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-              Check out our guide on creating the perfect event plan
-            </p>
-            <button className="bg-white text-[#5A3FFF] border border-gray-200 px-5 py-2 rounded-lg hover:bg-[#EDE9FE] hover:border-[#5A3FFF]/20 transition-all duration-300 ease-out font-medium text-sm">
-              View Guide
-            </button>
-          </div>
-
-          {/* Share card */}
-          <div className="bg-white border border-[#E5E5EB] rounded-2xl shadow-sm p-8 hover:shadow-md transition-all duration-300 ease-out">
-            <h3 className="text-lg font-semibold text-[#1E1E1E] mb-2 leading-tight">
-              Share Your Plans
-            </h3>
-            <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-              Invite friends with a simple link. No login required for them!
-            </p>
-            <Link
-              to="/create"
-              className="inline-block bg-gradient-to-r from-[#5A3FFF] to-[#6E53FF] text-white px-5 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 ease-out font-medium text-sm"
-            >
-              Create & Share
-            </Link>
-          </div>
-        </div>
       </div>
     </div>
   );

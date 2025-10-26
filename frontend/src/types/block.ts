@@ -132,6 +132,7 @@ export interface NoteBlockContent {
   text: string;
   lastEditedBy?: string;
   comments?: Comment[];
+  likes?: string[]; // Array of user IDs who liked the note
 }
 
 export interface Comment {

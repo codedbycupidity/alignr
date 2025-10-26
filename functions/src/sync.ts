@@ -306,6 +306,18 @@ async function generateInsightForEvent(eventId: string): Promise<{ success: bool
         }
       });
     }
+
+    // Count likes on note blocks (1 point each)
+    if (block.type === 'note' && block.content.likes) {
+      const likes = block.content.likes as string[] | undefined;
+      if (likes && Array.isArray(likes)) {
+        likes.forEach((likerId: string) => {
+          if (likerId !== organizerId) {
+            contributorMap.set(likerId, (contributorMap.get(likerId) || 0) + 1); // 1 point for each like
+          }
+        });
+      }
+    }
   });
 
   // Find top contributor (only among non-organizer participants)
@@ -488,11 +500,15 @@ async function generateInsightForEvent(eventId: string): Promise<{ success: bool
     }
   }
 
-  // NOTE BLOCKS
+  // NOTE BLOCKS - extract from content.text and likes
   if (blocksByType.note.length > 0) {
     const notes = blocksByType.note
-      .filter(b => b.title && b.title.trim())
-      .map(b => `"${b.title}"${b.description ? ': ' + b.description : ''}`)
+      .filter(b => b.content?.text && b.content.text.trim())
+      .map(b => {
+        const text = b.content.text.trim();
+        const likeCount = b.content.likes?.length || 0;
+        return `"${text}"${likeCount > 0 ? ` (${likeCount} likes)` : ''}`;
+      })
       .slice(0, 3)
       .join('; ');
     if (notes) {

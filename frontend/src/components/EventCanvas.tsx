@@ -2,11 +2,12 @@ import { useCallback } from 'react';
 import GridLayout, { Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import { Timestamp } from 'firebase/firestore';
-import type { Block, TimeBlock, LocationBlock as LocationBlockType, BudgetBlock as BudgetBlockType, TaskBlock as TaskBlockType, BlockLayout } from '../types/block';
+import type { Block, TimeBlock, LocationBlock as LocationBlockType, BudgetBlock as BudgetBlockType, TaskBlock as TaskBlockType, NoteBlock as NoteBlockType, BlockLayout } from '../types/block';
 import AvailabilityHeatmap from './AvailabilityHeatmap';
 import LocationBlock from './LocationBlock';
 import BudgetBlock from './BudgetBlock';
 import TaskBlock from './TaskBlock';
+import NoteBlock from './NoteBlock';
 import FixedDateTimeDisplay from './FixedDateTimeDisplay';
 import { GripVertical, X } from 'lucide-react';
 
@@ -216,6 +217,40 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, onLayo
             onTasksChange={(tasks) => {
               onBlockUpdate?.(block.id, {
                 content: { tasks }
+              });
+            }}
+          />
+        </div>
+      );
+    }
+
+    // Render NoteBlock
+    if (block.type === 'note') {
+      const nb = block as NoteBlockType;
+      const currentUserName = participantNames.get(currentUserId || '') || currentUserId || 'Anonymous';
+      // Convert lastEditedBy ID to name
+      const lastEditedByName = nb.content.lastEditedBy
+        ? participantNames.get(nb.content.lastEditedBy) || nb.content.lastEditedBy
+        : undefined;
+
+      return (
+        <div className="h-full overflow-auto">
+          <NoteBlock
+            text={nb.content.text || ''}
+            lastEditedBy={lastEditedByName}
+            comments={nb.content.comments || []}
+            likes={nb.content.likes || []}
+            currentUserId={currentUserId}
+            currentUserName={currentUserName}
+            isOrganizer={isOrganizer}
+            onNoteChange={(updatedText, updatedComments, lastEditedBy, likes) => {
+              onBlockUpdate?.(block.id, {
+                content: {
+                  text: updatedText,
+                  comments: updatedComments,
+                  lastEditedBy,
+                  likes
+                }
               });
             }}
           />

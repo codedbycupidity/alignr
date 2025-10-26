@@ -469,6 +469,27 @@ export default function PlanView() {
               } else if (blockType === 'task') {
                 // Show task suggestions modal
                 setShowTaskSuggestionsModal(true);
+              } else if (blockType === 'note') {
+                // Add empty note block
+                const newBlock = {
+                  type: 'note' as const,
+                  content: {
+                    text: '',
+                    comments: [],
+                    likes: []
+                  },
+                  layout: {
+                    x: 0,
+                    y: blocks.length * 2,
+                    w: 5,
+                    h: 3
+                  },
+                  order: blocks.length,
+                  author: user?.id || participantId || 'anonymous'
+                };
+                await addBlock(id!, newBlock);
+                const updatedBlocks = await getBlocks(id!);
+                setBlocks(updatedBlocks);
               } else {
                 // TODO: Handle other block types
                 console.log('Add block type:', blockType);

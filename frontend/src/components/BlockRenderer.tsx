@@ -16,9 +16,10 @@ export interface Block {
 interface BlockRendererProps {
   block: Block;
   onUpdate: (blockId: number, updates: Partial<Block>) => void;
+  isOrganizer?: boolean;
 }
 
-export default function BlockRenderer({ block, onUpdate }: BlockRendererProps) {
+export default function BlockRenderer({ block, onUpdate, isOrganizer }: BlockRendererProps) {
   const config = getBlockConfig(block.type);
   const BlockComponent = config.component;
 
@@ -33,8 +34,26 @@ export default function BlockRenderer({ block, onUpdate }: BlockRendererProps) {
 
   switch (block.type) {
     case 'note':
-      props.content = block.content || '';
-      props.onChange = (content: string) => onUpdate(block.id, { content });
+      // NoteBlock expects `text` and `onNoteChange`
+      props.text = block.content || '';
+  // allow the parent to force organizer editing (e.g., PlanCreator)
+  props.isOrganizer = typeof isOrganizer === 'boolean' ? isOrganizer : !!props.editable;
+      props.onNoteChange = (text: string, comments?: any, lastEditedBy?: string) => onUpdate(block.id, { content: text });
+      break;
+    case 'image':
+      // ImageBlock uses initialImages and isOrganizer flag
+      const existingImages = (block as any).content?.images ?? (block as any).images ?? [];
+      props.initialImages = existingImages;
+      props.isOrganizer = !!block.editableByAll || !!isOrganizer;
+      props.onChange = (images: any[]) => {
+        // If block uses a `content` object (persisted shape), update content.images
+        if ((block as any).content) {
+          onUpdate(block.id, { content: { ...(block as any).content, images } });
+        } else {
+          // Local shape (PlanCreator) - update top-level images
+          onUpdate(block.id, { ...( { images } as any) });
+        }
+      };
       break;
     case 'checklist':
       props.items = block.items || [];

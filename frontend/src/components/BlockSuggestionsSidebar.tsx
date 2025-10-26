@@ -1,4 +1,4 @@
-import { Sparkles, Loader2, Plus, Clock, MapPin, CheckSquare, FileText, BarChart3, Users, DollarSign, ChevronLeft } from 'lucide-react';
+import { Sparkles, Loader2, Plus, Clock, MapPin, CheckSquare, FileText, BarChart3, Users, DollarSign, ChevronLeft, Image } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { BlockSuggestion } from '../services/gemini';
@@ -9,6 +9,7 @@ const BLOCK_TYPES = [
   { type: 'location', label: 'Location', icon: MapPin, description: 'Venue suggestions' },
   { type: 'task', label: 'Task', icon: CheckSquare, description: 'To-do lists' },
   { type: 'note', label: 'Note', icon: FileText, description: 'General notes' },
+  { type: 'image', label: 'Images', icon: Image, description: 'Photos & uploads' },
   { type: 'poll', label: 'Poll', icon: BarChart3, description: 'Quick decisions' },
   { type: 'rsvp', label: 'RSVP', icon: Users, description: 'Track attendance' },
   { type: 'budget', label: 'Budget', icon: DollarSign, description: 'Split expenses' },
@@ -41,6 +42,8 @@ export default function BlockSuggestionsSidebar({
 }: BlockSuggestionsSidebarProps) {
   const [showBlockMenu, setShowBlockMenu] = useState(false);
 
+  
+
   // Check if a block type already exists
   const hasBlockType = (type: string) => {
     return existingBlocks.some(block => block.type === type);
@@ -51,13 +54,14 @@ export default function BlockSuggestionsSidebar({
       isOpen ? 'w-80 px-6 py-8' : 'w-20 px-0 py-8'
     }`}>
       {/* Toggle Button */}
-      <div className={`flex items-center justify-center mb-4 ${!isOpen ? 'px-4' : ''}`}>
+      {/* Toggle - always visible */}
+      <div className="absolute top-4 -right-5">
         <button
           onClick={onToggleSidebar}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-2 bg-white border border-gray-200 rounded-full shadow-sm hover:bg-gray-50 transition-colors"
           title={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
         >
-          <ChevronLeft className={`w-5 h-5 text-gray-500 hover:text-gray-700 transition-transform duration-300 ${!isOpen ? 'rotate-180' : ''}`} />
+          <ChevronLeft className={`w-5 h-5 text-gray-600 transition-transform duration-300 ${!isOpen ? 'rotate-180' : ''}`} />
         </button>
       </div>
 
@@ -114,6 +118,13 @@ export default function BlockSuggestionsSidebar({
                                   onAddBlock(blockType.type);
                                   setShowBlockMenu(false);
                                 }
+                              }}
+                              draggable={!isDisabled}
+                              onMouseDown={(e: React.MouseEvent) => {
+                                if (isDisabled) return;
+                                const suggestion = { title: blockType.label, reason: blockType.description, blockType: blockType.type } as any;
+                                try { (onDragStart as any)(e as any, suggestion); } catch {}
+                                setShowBlockMenu(false);
                               }}
                               disabled={isDisabled}
                               className={`w-full p-3 text-left rounded-md transition-colors group ${
@@ -178,6 +189,7 @@ export default function BlockSuggestionsSidebar({
                   ))}
                 </div>
               )}
+              {/* end sidebar content */}
             </>
           )}
         </>

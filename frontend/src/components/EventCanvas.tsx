@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef, useEffect, useState } from 'react';
 import GridLayout, { Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import { Timestamp } from 'firebase/firestore';
@@ -9,6 +9,7 @@ import BudgetBlock from './BudgetBlock';
 import TaskBlock from './TaskBlock';
 import NoteBlock from './NoteBlock';
 import FixedDateTimeDisplay from './FixedDateTimeDisplay';
+import ImageBlock from './ImageBlock';
 import { GripVertical, X } from 'lucide-react';
 
 interface EventCanvasProps {
@@ -66,6 +67,28 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, onLayo
       }
     });
   }, [blocks, isOrganizer, onLayoutChange]);
+
+  // responsive grid width to avoid horizontal scroll on narrow viewports
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [containerWidth, setContainerWidth] = useState<number>(() => {
+    try {
+      return Math.min(1000, typeof window !== 'undefined' ? window.innerWidth - 64 : 1000);
+    } catch {
+      return 1000;
+    }
+  });
+
+  useEffect(() => {
+    function measure() {
+      const el = containerRef.current;
+      if (!el) return;
+      const w = el.clientWidth || Math.min(1000, window.innerWidth - 40);
+      setContainerWidth(w);
+    }
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
 
   const renderBlock = (block: Block) => {
     // Render TimeBlock
@@ -224,6 +247,25 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, onLayo
       );
     }
 
+    // Render ImageBlock
+    if ((block as any).type === 'image') {
+      const ib = block as any;
+
+      return (
+        <div className="h-full overflow-auto">
+          <ImageBlock
+            initialImages={ib.content?.images || []}
+            isOrganizer={isOrganizer}
+            onChange={(images) => {
+              onBlockUpdate?.(block.id, {
+                content: { ...(ib.content || {}), images }
+              });
+            }}
+          />
+        </div>
+      );
+    }
+
     // Render NoteBlock
     if (block.type === 'note') {
       const nb = block as NoteBlockType;
@@ -287,29 +329,29 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, onLayo
   }
 
   return (
-    <div className="relative max-w-5xl">
+    <div ref={containerRef} className="relative max-w-5xl mx-auto">
       <GridLayout
         className="layout"
         layout={layout}
         cols={12}
-        rowHeight={100}
-        width={1000}
+        rowHeight={80}
+        width={containerWidth}
         onLayoutChange={handleLayoutChange}
         isDraggable={isOrganizer}
         isResizable={isOrganizer}
         compactType={null}
         preventCollision={false}
-        margin={[16, 16]}
+        margin={[12, 12]}
         containerPadding={[0, 0]}
         draggableHandle=".drag-handle"
       >
         {blocks.map(block => (
           <div
             key={block.id}
-            className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden hover:border-[#75619D] transition-colors"
+            className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden hover:border-[#75619D] transition-colors h-full flex flex-col"
           >
             {/* Block Header */}
-            <div className="bg-gray-50 border-b border-gray-200 px-3 py-2 flex items-center justify-between">
+            <div className="bg-gray-50 border-b border-gray-200 px-2 py-1 flex items-center justify-between text-sm">
               <div className={`flex items-center gap-2 flex-1 ${isOrganizer ? 'drag-handle cursor-move hover:bg-gray-100' : ''}`}>
                 {isOrganizer && <GripVertical className="w-4 h-4 text-gray-400" />}
                 <span className="text-xs font-medium text-gray-600">
@@ -332,7 +374,7 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, onLayo
                 </button>
               )}
             </div>
-            <div className="p-4 h-[calc(100%-40px)]">
+            <div className="p-2 h-full overflow-hidden">
               {renderBlock(block)}
             </div>
           </div>

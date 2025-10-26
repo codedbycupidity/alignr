@@ -275,7 +275,7 @@ export default function PlanCreator() {
                 </button>
 
                 {/* Render the block using BlockRenderer */}
-                <BlockRenderer block={block} onUpdate={updateBlock} />
+                <BlockRenderer block={block} onUpdate={updateBlock} isOrganizer={true} />
               </div>
             </Draggable>
           ))}

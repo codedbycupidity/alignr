@@ -4,6 +4,7 @@ import {
   Users, 
   BarChart3, 
   Sparkles,
+  Image,
   LucideIcon
 } from 'lucide-react';
 
@@ -12,8 +13,9 @@ import NoteBlock from './NoteBlock';
 import ChecklistBlock from './Checklist_Block';
 import RsvpBlock from './RSVP_Block';
 import VotingBlock from './Voting_Block';
+import ImageBlock from './ImageBlock';
 
-export type BlockType = 'note' | 'checklist' | 'poll' | 'rsvp' | 'gemmi';
+export type BlockType = 'note' | 'checklist' | 'poll' | 'rsvp' | 'gemmi' | 'image';
 
 export interface Block {
   id: number;
@@ -77,6 +79,13 @@ export const BLOCK_REGISTRY: Record<BlockType, BlockConfig> = {
     defaultData: {
       people: []
     }
+  },
+  image: {
+    type: 'image',
+    label: 'Images',
+    icon: Image,
+    component: ImageBlock,
+    defaultData: {}
   },
   gemmi: {
     type: 'gemmi',

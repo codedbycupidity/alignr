@@ -351,12 +351,31 @@ export default function PlanView() {
           order: blocks.length,
           author: user?.id || participantId || 'anonymous'
         };
-        await addBlock(id!, newBlock);
-        const updatedBlocks = await getBlocks(id!);
+  await addBlock(id!, newBlock as any);
+  const updatedBlocks = await getBlocks(id!);
         setBlocks(updatedBlocks);
       } else if (blockType === 'task') {
         // Show task suggestions modal
         setShowTaskSuggestionsModal(true);
+      } else if (blockType === 'image') {
+        // Add empty image block
+        const newBlock = {
+          type: 'image' as const,
+          content: {
+            images: []
+          },
+          layout: {
+            x: 0,
+            y: blocks.length * 2,
+            w: 6,
+            h: 4
+          },
+          order: blocks.length,
+          author: user?.id || participantId || 'anonymous'
+        };
+        await addBlock(id!, newBlock);
+        const updatedBlocks = await getBlocks(id!);
+        setBlocks(updatedBlocks);
       } else if (blockType === 'note') {
         // Add empty note block
         const newBlock = {

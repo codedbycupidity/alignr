@@ -1,4 +1,4 @@
-import { Sparkles, Loader2, Plus, Clock, MapPin, CheckSquare, FileText, BarChart3, Users, DollarSign } from 'lucide-react';
+import { Sparkles, Loader2, Plus, Clock, MapPin, CheckSquare, FileText, BarChart3, Users, DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { BlockSuggestion } from '../services/gemini';
@@ -36,6 +36,7 @@ export default function BlockSuggestionsSidebar({
   onAddBlock
 }: BlockSuggestionsSidebarProps) {
   const [showBlockMenu, setShowBlockMenu] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Check if a block type already exists
   const hasBlockType = (type: string) => {
@@ -43,7 +44,22 @@ export default function BlockSuggestionsSidebar({
   };
 
   return (
-    <aside className="w-80 border-r border-gray-200 bg-white px-6 py-8 overflow-y-auto">
+    <aside className={`relative border-r border-gray-200 bg-white transition-all duration-300 ${isCollapsed ? 'w-0' : 'w-80'}`}>
+      {/* Collapse/Expand Button - positioned outside sidebar */}
+      <button
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        className="absolute -right-3 top-8 z-50 w-6 h-6 bg-white border border-gray-200 rounded-full shadow-md hover:shadow-lg transition-all flex items-center justify-center hover:bg-gray-50"
+        title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+      >
+        {isCollapsed ? (
+          <ChevronRight className="w-4 h-4 text-gray-600" />
+        ) : (
+          <ChevronLeft className="w-4 h-4 text-gray-600" />
+        )}
+      </button>
+
+      {/* Sidebar Content */}
+      <div className={`h-full overflow-y-auto px-6 py-8 transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-2">
           <Sparkles className="w-5 h-5 text-[#75619D]" />
@@ -161,6 +177,7 @@ export default function BlockSuggestionsSidebar({
           )}
         </>
       )}
+      </div>
     </aside>
   );
 }

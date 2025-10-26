@@ -244,22 +244,54 @@ export async function removeParticipant(
     let needsUpdate = false;
     const updates: any = {};
 
-    // Remove from TimeBlock availability
-    if (block.type === 'time' && block.content?.availability) {
-      const filteredAvailability = block.content.availability.filter(
-        (a: any) => a.participantId !== participantId
-      );
-      if (filteredAvailability.length !== block.content.availability.length) {
-        updates['content.availability'] = filteredAvailability;
-        needsUpdate = true;
+    // Remove from TimeBlock availability and voting options
+    if (block.type === 'time') {
+      // Remove from availability mode
+      if (block.content?.availability) {
+        const filteredAvailability = block.content.availability.filter(
+          (a: any) => a.participantId !== participantId
+        );
+        if (filteredAvailability.length !== block.content.availability.length) {
+          updates['content.availability'] = filteredAvailability;
+          needsUpdate = true;
+        }
+      }
+
+      // Remove from voting mode options
+      if (block.content?.options) {
+        const updatedOptions = block.content.options.map((option: any) => {
+          if (option.votes && option.votes.includes(participantId)) {
+            return {
+              ...option,
+              votes: option.votes.filter((id: string) => id !== participantId)
+            };
+          }
+          return option;
+        });
+        if (JSON.stringify(updatedOptions) !== JSON.stringify(block.content.options)) {
+          updates['content.options'] = updatedOptions;
+          needsUpdate = true;
+        }
       }
     }
 
     // Remove from TaskBlock claims
     if (block.type === 'task' && block.content?.tasks) {
       const updatedTasks = block.content.tasks.map((task: any) => {
-        if (task.claimedBy === participantId) {
-          return { ...task, claimedBy: undefined };
+        // Handle both old string format and new array format
+        if (typeof task.claimedBy === 'string' && task.claimedBy === participantId) {
+          // Remove claimedBy field entirely (don't set to undefined)
+          const { claimedBy, ...taskWithoutClaim } = task;
+          return taskWithoutClaim;
+        } else if (Array.isArray(task.claimedBy) && task.claimedBy.includes(participantId)) {
+          // Remove participant from array
+          const newClaimedBy = task.claimedBy.filter((id: string) => id !== participantId);
+          if (newClaimedBy.length === 0) {
+            // Remove claimedBy field if array is empty
+            const { claimedBy, ...taskWithoutClaim } = task;
+            return taskWithoutClaim;
+          }
+          return { ...task, claimedBy: newClaimedBy };
         }
         return task;
       });
@@ -297,13 +329,55 @@ export async function removeParticipant(
       }
     }
 
-    // Remove from NoteBlock likes
-    if (block.type === 'note' && block.content?.likes) {
-      const filteredLikes = block.content.likes.filter(
-        (id: string) => id !== participantId
+    // Remove from NoteBlock likes and comments
+    if (block.type === 'note') {
+      // Remove likes
+      if (block.content?.likes) {
+        const filteredLikes = block.content.likes.filter(
+          (id: string) => id !== participantId
+        );
+        if (filteredLikes.length !== block.content.likes.length) {
+          updates['content.likes'] = filteredLikes;
+          needsUpdate = true;
+        }
+      }
+
+      // Remove comments by this participant
+      if (block.content?.comments) {
+        const filteredComments = block.content.comments.filter(
+          (comment: any) => comment.author !== participantId
+        );
+        if (filteredComments.length !== block.content.comments.length) {
+          updates['content.comments'] = filteredComments;
+          needsUpdate = true;
+        }
+      }
+    }
+
+    // Remove from PollBlock votes
+    if (block.type === 'poll' && block.content?.options) {
+      const updatedOptions = block.content.options.map((option: any) => {
+        if (option.votes && option.votes.includes(participantId)) {
+          return {
+            ...option,
+            votes: option.votes.filter((id: string) => id !== participantId)
+          };
+        }
+        return option;
+      });
+      if (JSON.stringify(updatedOptions) !== JSON.stringify(block.content.options)) {
+        updates['content.options'] = updatedOptions;
+        needsUpdate = true;
+      }
+    }
+
+    // Remove from AlbumBlock images uploaded by this participant
+    if (block.type === 'album' && block.content?.images) {
+      const filteredImages = block.content.images.filter(
+        (image: any) => image.uploadedBy !== participantId
       );
-      if (filteredLikes.length !== block.content.likes.length) {
-        updates['content.likes'] = filteredLikes;
+      if (filteredImages.length !== block.content.images.length) {
+        updates['content.images'] = filteredImages;
         needsUpdate = true;
       }
     }

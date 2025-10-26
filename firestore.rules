@@ -24,12 +24,15 @@ service cloud.firestore {
         // Anyone can read participants of public events
         allow read: if get(/databases/$(database)/documents/events/$(eventId)).data.isPublic == true;
 
-        // Organizer can manage participants
+        // Organizer can manage all participants
         allow write: if request.auth != null &&
                         request.auth.uid == get(/databases/$(database)/documents/events/$(eventId)).data.organizerId;
 
         // Participants can add themselves
         allow create: if true;
+
+        // Participants can delete themselves
+        allow delete: if true;
       }
 
       // Blocks subcollection

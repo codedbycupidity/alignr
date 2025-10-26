@@ -171,7 +171,7 @@ export default function PlanView() {
   };
 
   const handleSelectTimeSlot = async (date: string, startTime: string, endTime: string) => {
-    if (!id) return;
+    if (!id || !timeBlock) return;
 
     // Format times to 12-hour
     const formatTime = (time24: string) => {
@@ -201,7 +201,21 @@ export default function PlanView() {
 
     const description = `${formattedDate} • ${formatTime(startTime)} - ${formatTime(endTime)}`;
 
+    // Update the event description
     await updateEvent(id, { description });
+
+    // Convert the TimeBlock to fixed mode
+    await handleBlockUpdate(timeBlock.id, {
+      content: {
+        ...timeBlock.content,
+        mode: 'fixed',
+        fixedDate: date,
+        fixedStartTime: startTime,
+        fixedEndTime: endTime,
+        fixedTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      }
+    });
+
     await reloadEvent();
   };
 

@@ -1,7 +1,8 @@
 import { RefObject, useState } from 'react';
-import { Calendar, Users, Check, X, Loader2, Clock, Globe, Edit2, Sparkles } from 'lucide-react';
+import { Calendar, Users, Check, X, Loader2, Clock, Globe, Edit2, Sparkles, Download } from 'lucide-react';
 import type { TimeBlock } from '../types/block';
 import { generateEventDescription } from '../services/gemini';
+import { generateICS, downloadICS } from '../utils/icsGenerator';
 
 interface EditableEventHeaderProps {
   eventName: string;
@@ -104,6 +105,29 @@ export default function EditableEventHeader({
     const ampm = hour < 12 ? 'AM' : 'PM';
     return `${hour12}:${min.toString().padStart(2, '0')} ${ampm}`;
   };
+
+  const handleExportToCalendar = () => {
+    if (!fixedTimeBlock) return;
+
+    const { fixedDate, fixedStartTime, fixedEndTime, fixedTimezone } = fixedTimeBlock.content;
+
+    if (!fixedDate || !fixedStartTime || !fixedEndTime) {
+      alert('Event date and time must be set before exporting to calendar');
+      return;
+    }
+
+    const icsContent = generateICS({
+      title: eventName,
+      description: eventDescription,
+      startDate: fixedDate,
+      startTime: fixedStartTime,
+      endTime: fixedEndTime,
+      timezone: fixedTimezone
+    });
+
+    downloadICS(icsContent, `${eventName.replace(/[^a-z0-9]/gi, '_')}.ics`);
+  };
+
   return (
     <div className="mb-8">
       <div className="flex items-center gap-3 mb-3">
@@ -294,6 +318,15 @@ export default function EditableEventHeader({
             <span className="text-gray-400">•</span>
             <Globe className="w-4 h-4 text-[#75619D]" />
             <span className="text-xs">{fixedTimeBlock.content.fixedTimezone?.replace('_', ' ')}</span>
+            <span className="text-gray-400">•</span>
+            <button
+              onClick={handleExportToCalendar}
+              className="flex items-center gap-1 px-2 py-1 text-xs text-[#75619D] rounded hover:bg-[#75619D]/10 transition-colors"
+              title="Add to Calendar"
+            >
+              <Download className="w-3 h-3" />
+              <span>Add to Calendar</span>
+            </button>
             {isOrganizer && onDeleteFixedTimeBlock && (
               <>
                 <span className="text-gray-400">•</span>

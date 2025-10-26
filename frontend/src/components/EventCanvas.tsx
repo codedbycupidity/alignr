@@ -35,8 +35,15 @@ interface EventCanvasProps {
 }
 
 export default function EventCanvas({ blocks, isOrganizer, currentUserId, eventId, organizerId, participants = [], onLayoutChange, onBlockUpdate, onBlockDelete, onSelectTimeSlot, onRemoveParticipant, onAddParticipant }: EventCanvasProps) {
-  // Build participant name map from TimeBlock availability
+  // Build participant name map from participants array and TimeBlock availability
   const participantNames = new Map<string, string>();
+
+  // First, add all participants from the participants array
+  participants.forEach(participant => {
+    participantNames.set(participant.id, participant.name);
+  });
+
+  // Then add from TimeBlock availability (may override if names differ)
   blocks.forEach(block => {
     if (block.type === 'time') {
       const tb = block as TimeBlock;
@@ -208,7 +215,7 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, eventI
     // Render BudgetBlock
     if (block.type === 'budget') {
       const bb = block as BudgetBlockType;
-      const currentUserName = participantNames.get(currentUserId || '') || 'You';
+      const currentUserName = participantNames.get(currentUserId || '') || currentUserId || 'Unknown';
 
       return (
         <div className="h-full overflow-auto">

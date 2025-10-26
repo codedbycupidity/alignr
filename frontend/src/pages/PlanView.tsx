@@ -150,8 +150,12 @@ export default function PlanView() {
   };
 
   const handleSuggestionClick = async (suggestion: any) => {
+    // For time blocks, open the modal for configuration
     if (suggestion.blockType === 'time') {
       setShowTimeBlockModal(true);
+    } else {
+      // For all other block types, create the block directly
+      await handleAddBlockType(suggestion.blockType);
     }
   };
 

@@ -44,15 +44,33 @@ export default function TaskBlock({
 
     const updatedTasks = tasks.map(task => {
       if (task.id === taskId) {
-        const isUnclaiming = task.claimedBy === currentUserId;
-        if (isUnclaiming) {
-          // Remove claimedBy field entirely when unclaiming
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { claimedBy, ...taskWithoutClaim } = task;
-          return taskWithoutClaim;
+        // Handle backward compatibility: convert old string format to array
+        let claimedByArray: string[] = [];
+        if (task.claimedBy) {
+          if (typeof task.claimedBy === 'string') {
+            // Old format: single string
+            claimedByArray = [task.claimedBy as unknown as string];
+          } else {
+            // New format: array
+            claimedByArray = task.claimedBy;
+          }
+        }
+
+        const hasClaimedTask = claimedByArray.includes(currentUserId);
+
+        if (hasClaimedTask) {
+          // Remove current user from claimedBy array
+          const newClaimedBy = claimedByArray.filter(id => id !== currentUserId);
+          if (newClaimedBy.length === 0) {
+            // Remove claimedBy field entirely if no one claimed it
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { claimedBy, ...taskWithoutClaim } = task;
+            return taskWithoutClaim;
+          }
+          return { ...task, claimedBy: newClaimedBy };
         } else {
-          // Add claimedBy when claiming
-          return { ...task, claimedBy: currentUserId };
+          // Add current user to claimedBy array
+          return { ...task, claimedBy: [...claimedByArray, currentUserId] };
         }
       }
       return task;
@@ -88,10 +106,22 @@ export default function TaskBlock({
                     </div>
                   )}
                   {task.claimedBy && (
-                    <div className="flex items-center gap-1 mt-1">
+                    <div className="flex items-center gap-1 mt-1 flex-wrap">
                       <User className="w-3 h-3 text-[#75619D]" />
                       <span className="text-xs text-[#75619D] font-medium">
-                        {participantNames?.get(task.claimedBy) || 'Claimed'}
+                        {(() => {
+                          // Handle backward compatibility
+                          if (typeof task.claimedBy === 'string') {
+                            return participantNames?.get(task.claimedBy as unknown as string) || 'Unknown';
+                          }
+                          // New array format
+                          return task.claimedBy.map((userId, index) => (
+                            <span key={userId}>
+                              {participantNames?.get(userId) || 'Unknown'}
+                              {index < task.claimedBy!.length - 1 && ', '}
+                            </span>
+                          ));
+                        })()}
                       </span>
                     </div>
                   )}
@@ -101,19 +131,31 @@ export default function TaskBlock({
                 <div className="flex items-center gap-1 flex-shrink-0">
                   {currentUserId && !isOrganizer && (
                     <>
-                      {/* Only show claim/unclaim if not claimed by someone else */}
-                      {(!task.claimedBy || task.claimedBy === currentUserId) && (
-                        <button
-                          onClick={() => handleClaimTask(task.id)}
-                          className={`px-2 py-1 text-xs rounded transition-colors ${
-                            task.claimedBy === currentUserId
-                              ? 'bg-[#75619D] text-white hover:bg-[#624F8A]'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          }`}
-                        >
-                          {task.claimedBy === currentUserId ? 'Unclaim' : 'Claim'}
-                        </button>
-                      )}
+                      {/* Show claim/unclaim button for all participants */}
+                      {(() => {
+                        // Handle backward compatibility for checking if user claimed
+                        let hasClaimed = false;
+                        if (task.claimedBy) {
+                          if (typeof task.claimedBy === 'string') {
+                            hasClaimed = task.claimedBy === currentUserId;
+                          } else {
+                            hasClaimed = task.claimedBy.includes(currentUserId);
+                          }
+                        }
+
+                        return (
+                          <button
+                            onClick={() => handleClaimTask(task.id)}
+                            className={`px-2 py-1 text-xs rounded transition-colors ${
+                              hasClaimed
+                                ? 'bg-[#75619D] text-white hover:bg-[#624F8A]'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                          >
+                            {hasClaimed ? 'Unclaim' : 'Claim'}
+                          </button>
+                        );
+                      })()}
                     </>
                   )}
                   {isOrganizer && (

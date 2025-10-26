@@ -115,7 +115,7 @@ export interface Task {
   id: string;
   label: string;
   description: string;
-  claimedBy?: string; // participant ID or name
+  claimedBy?: string[]; // array of participant IDs who claimed this task
   completed: boolean;
 }
 

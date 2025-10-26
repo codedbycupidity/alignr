@@ -50,7 +50,7 @@ Instantly export finalized plans to personal calendar apps with one click:
   - Microsoft Outlook
   - Any mobile calendar app
 - **Seamless sync** — Take your final plan outside Alignr into the tools you already use
-- **Optional availability checking** — Cronofy API integration to find free time slots across participants
+
 
 ### AI-Powered Analytics (Snowflake Cortex AI)
 Real-time event data syncs to Snowflake for deep analytics powered by **Snowflake Cortex AI**:

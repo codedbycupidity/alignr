@@ -58,10 +58,10 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, eventN
   
   const layout: Layout[] = sortedBlocks.map(block => ({
     i: block.id,
-    x: block.layout.x * 10, // Multiply by 10 for finer positioning
-    y: block.layout.y * 10, // Multiply by 10 for finer positioning
-    w: block.layout.w * 10, // Scale width accordingly
-    h: block.layout.h * 80, // Convert previous rowHeight 80 to new rowHeight 1
+    x: block.layout.x,
+    y: block.layout.y,
+    w: block.layout.w,
+    h: block.layout.h,
     static: !isOrganizer, // Only organizer can move blocks
     z: block.order // Use order for z-index (higher = on top)
   }));
@@ -73,10 +73,10 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, eventN
       const block = sortedBlocks.find(b => b.id === item.i);
       if (block) {
         // Convert back from fine-grained positioning
-        const newX = Math.round(item.x / 10);
-        const newY = Math.round(item.y / 10);
-        const newW = Math.round(item.w / 10);
-        const newH = Math.round(item.h / 80);
+        const newX = Math.round(item.x);
+        const newY = Math.round(item.y);
+        const newW = Math.round(item.w);
+        const newH = Math.round(item.h);
 
         const hasChanged =
           block.layout.x !== newX ||
@@ -403,26 +403,9 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, eventN
     );
   };
 
-  if (blocks.length === 0) {
-    return (
-      <div className="text-center py-24 px-4">
-        <div className="w-32 h-32 mx-auto mb-6 relative">
-          <div className="absolute inset-0 bg-gradient-to-tr from-[#75619D]/20 to-[#9D61A4]/20 rounded-3xl transform rotate-6 animate-pulse"></div>
-          <div className="absolute inset-0 bg-white/90 backdrop-blur-sm rounded-3xl border border-[#75619D]/10 shadow-xl flex items-center justify-center">
-            <GripVertical className="w-12 h-12 text-[#75619D] opacity-40" />
-          </div>
-        </div>
-        <h3 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#75619D] to-[#9D61A4] mb-3">
-          Your canvas is empty
-        </h3>
-        <p className="text-base text-gray-600 max-w-md mx-auto">
-          {isOrganizer
-            ? 'Start building your event by dragging blocks from the sidebar. Each block adds a new dimension to your planning canvas.'
-            : "The organizer is still crafting this event's experience. Check back soon!"}
-        </p>
-      </div>
-    );
-  }
+  // Note: Do NOT early-return here. React hooks must be called in the same order
+  // on every render. We'll render the empty-state UI inside the main return so
+  // hooks declared above always run.
 
   // Handle keyboard events
   useEffect(() => {
@@ -501,18 +484,37 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, eventN
           100% { transform: translateY(0) scale(0.8); opacity: 0.6; }
         }
       `}</style>
+      {sortedBlocks.length === 0 ? (
+        <div className="text-center py-24 px-4">
+          <div className="w-32 h-32 mx-auto mb-6 relative">
+            <div className="absolute inset-0 bg-gradient-to-tr from-[#75619D]/20 to-[#9D61A4]/20 rounded-3xl transform rotate-6 animate-pulse"></div>
+            <div className="absolute inset-0 bg-white/90 backdrop-blur-sm rounded-3xl border border-[#75619D]/10 shadow-xl flex items-center justify-center">
+              <GripVertical className="w-12 h-12 text-[#75619D] opacity-40" />
+            </div>
+          </div>
+          <h3 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#75619D] to-[#9D61A4] mb-3">
+            Your canvas is empty
+          </h3>
+          <p className="text-base text-gray-600 max-w-md mx-auto">
+            {isOrganizer
+              ? 'Start building your event by dragging blocks from the sidebar. Each block adds a new dimension to your planning canvas.'
+              : "The organizer is still crafting this event's experience. Check back soon!"}
+          </p>
+        </div>
+      ) : (
       <GridLayout
         className="layout"
         layout={layout}
-        cols={1000} // Much higher number of cols for finer positioning
-        rowHeight={1} // Small row height for finer positioning
+        cols={24} // 24 columns for a standard grid
+        rowHeight={30} // 30px row height (more natural sizing)
         width={containerWidth}
         onLayoutChange={handleLayoutChange}
-  isDraggable={isOrganizer}
-  isResizable={isOrganizer}
+        isDraggable={isOrganizer}
+        isResizable={isOrganizer}
+        resizeHandles={['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne']} // Enable all resize handles
         compactType={null} // Disable automatic compacting
-  preventCollision={false} // Allow overlap; enable free-form placement
-  allowOverlap={true}
+        preventCollision={false} // Allow overlap; enable free-form placement
+        allowOverlap={true}
         margin={[0, 0]} // Remove margin between blocks
         containerPadding={[0, 0]}
         draggableHandle=".drag-handle"
@@ -584,6 +586,7 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, eventN
           </div>
         ))}
       </GridLayout>
+      )}
     </div>
   );
 }

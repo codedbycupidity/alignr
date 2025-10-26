@@ -22,6 +22,20 @@ export const db = getFirestore(app);
 // Initialize Authentication
 export const auth = getAuth(app);
 
+// Debug: log which Firebase project the app is using (non-secret) and auth state changes
+try {
+  // eslint-disable-next-line no-console
+  console.debug('[firebase] projectId:', firebaseConfig.projectId);
+} catch (e) {}
+
+// Log auth state changes to help diagnose permission issues
+try {
+  auth.onAuthStateChanged((user) => {
+    // eslint-disable-next-line no-console
+    console.debug('[firebase] auth state changed. userId:', user ? user.uid : null);
+  });
+} catch (e) {}
+
 // Initialize Functions
 export const functions = getFunctions(app);
 

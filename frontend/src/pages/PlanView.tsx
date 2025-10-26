@@ -283,42 +283,41 @@ export default function PlanView() {
       if (!id) return;
       setError(null); // Clear previous errors
 
-      // Convert pixel dropPosition into grid coords used elsewhere (simple approximation)
+      // Get the exact drop coordinates relative to the canvas
       const canvasElement = document.querySelector('.react-grid-layout');
       let gridX = 0;
       let gridY = 0;
       if (canvasElement) {
         const crect = canvasElement.getBoundingClientRect();
-        gridX = Math.floor((dropPosition.x / crect.width) * 12);
-        gridY = Math.floor(dropPosition.y / 100);
+        // Convert pixel position to grid units (24 cols, 30px rows)
+        gridX = Math.floor((dropPosition.x / crect.width) * 24);
+        gridY = Math.floor(dropPosition.y / 30);
       }
-
-      const nextY = blocks.length > 0 ? Math.max(...blocks.map(b => b.layout.y + b.layout.h)) : 0;
 
       // Determine block size based on type for better visibility
       const getBlockSize = (blockType: string) => {
         switch (blockType) {
           case 'image':
-            return { w: 6, h: 5 };
+            return { w: 8, h: 8 }; // Square for images
           case 'time':
-            return { w: 8, h: 6 };
+            return { w: 12, h: 10 }; // Wide for calendar
           case 'location':
-            return { w: 5, h: 4 };
+            return { w: 8, h: 6 }; // Medium rectangle
           case 'budget':
-            return { w: 4, h: 3 };
+            return { w: 6, h: 6 }; // Square for budget
           case 'task':
-            return { w: 5, h: 4 };
+            return { w: 8, h: 8 }; // Square for task list
           case 'note':
-            return { w: 5, h: 3 };
+            return { w: 8, h: 6 }; // Medium rectangle
           default:
-            return { w: 6, h: 4 };
+            return { w: 8, h: 6 }; // Default size
         }
       };
 
       const blockSize = getBlockSize(draggingSuggestion.blockType);
       const baseLayout = {
-        x: Math.max(0, Math.min(11, gridX)),
-        y: Math.max(0, gridY || nextY),
+        x: Math.max(0, Math.min(23, gridX)), // 24 cols (0-23)
+        y: Math.max(0, gridY),
         w: blockSize.w,
         h: blockSize.h
       } as any;
@@ -497,13 +496,13 @@ export default function PlanView() {
             onAddBlock={async (blockType) => {
               const getSize = (type: string) => {
                 switch (type) {
-                  case 'image': return { w: 6, h: 5 };
-                  case 'time': return { w: 8, h: 6 };
-                  case 'location': return { w: 5, h: 4 };
-                  case 'budget': return { w: 4, h: 3 };
-                  case 'task': return { w: 5, h: 4 };
-                  case 'note': return { w: 5, h: 3 };
-                  default: return { w: 6, h: 4 };
+                  case 'image': return { w: 8, h: 8 }; // Square for images
+                  case 'time': return { w: 12, h: 10 }; // Wide for calendar
+                  case 'location': return { w: 8, h: 6 }; // Medium rectangle
+                  case 'budget': return { w: 6, h: 6 }; // Square for budget
+                  case 'task': return { w: 8, h: 8 }; // Square for task list
+                  case 'note': return { w: 8, h: 6 }; // Medium rectangle
+                  default: return { w: 8, h: 6 }; // Default size
                 }
               };
 

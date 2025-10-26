@@ -1,111 +1,202 @@
 import { Link } from "react-router-dom";
 import {
-  MessageSquare,
-  TrendingUp,
-  CheckCircle,
+  Calendar,
+  Users,
+  Sparkles,
+  Clock,
+  MapPin,
+  CheckSquare,
 } from "lucide-react";
 import favicon from "../assets/favicon.png";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#0D0D12] text-[#EAEAF5] flex flex-col">
-      
+    <div className="min-h-screen bg-gradient-to-br from-[#F8F7FC] via-white to-[#F3F1F9] text-gray-900 flex flex-col">
+
       {/* Navbar */}
-      <nav className="bg-[#0F0F16]/80 backdrop-blur-lg border-b border-[#1E1E29]/60 sticky top-0 z-50">
+      <nav className="bg-white/80 backdrop-blur-lg border-b border-[#E6E4F0] sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center h-16">
           <Link to="/" className="flex items-center space-x-2.5 group">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
               <img src={favicon} alt="Alignr" className="w-full h-full object-cover" />
             </div>
-            <span className="text-xl font-semibold text-white tracking-tight">Alignr</span>
+            <span className="text-xl font-bold text-[#3F2A52] tracking-tight">alignr</span>
           </Link>
 
           <div className="flex items-center space-x-4">
             <Link
-              to="/login"
-              className="text-[#B8B7C9] hover:text-white font-medium text-sm transition-colors duration-300"
+              to="/auth"
+              className="bg-[#75619D] text-white px-5 py-2.5 rounded-lg font-semibold text-sm hover:bg-[#624F8A] transition-all shadow-md hover:shadow-lg"
             >
-              Log In
-            </Link>
-            <Link
-              to="/signup"
-              className="bg-[#7B61FF] text-white px-5 py-2 rounded-lg font-medium text-sm hover:bg-[#684FE0] transition-all duration-500 shadow-lg hover:shadow-[#7B61FF]/40"
-            >
-              Sign Up
+              Create Event
             </Link>
           </div>
         </div>
       </nav>
 
       {/* Hero section */}
-      <section className="py-32 relative overflow-hidden">
-        {/* Subtle purple haze */}
-        <div className="absolute inset-0 bg-gradient-radial from-[#7B61FF]/10 via-transparent to-transparent opacity-40"></div>
-        
+      <section className="py-20 sm:py-32 relative overflow-hidden">
+        {/* Subtle purple circles */}
+        <div className="absolute top-20 right-10 w-72 h-72 bg-[#BEAEDB]/20 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 left-10 w-96 h-96 bg-[#75619D]/10 rounded-full blur-3xl"></div>
+
         <div className="max-w-5xl mx-auto px-6 text-center relative z-10">
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white mb-8 leading-tight">
-            A canvas for{' '}
-            <span className="text-[#7B61FF]">real-world plans</span>
-          </h1>
-          
-          <p className="text-lg sm:text-xl text-[#B8B7C9] max-w-2xl mx-auto mb-12 leading-relaxed font-medium">
-            Drop times, places, and notes — or share an event.{' '}
-            <span className="text-[#EAEAF5]">
-              Alignr keeps it structured and smart, so planning feels creative, not chaotic.
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#75619D]/10 rounded-full mb-8">
+            <Sparkles className="w-4 h-4 text-[#75619D]" />
+            <span className="text-sm font-semibold text-[#75619D]">One link, zero chaos</span>
+          </div>
+
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-[#1E1E2F] mb-6 leading-tight">
+            Group plans that{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#75619D] to-[#BEAEDB]">
+              actually happen
             </span>
+          </h1>
+
+          <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto mb-12 leading-relaxed">
+            Replace endless group chat messages with one interactive canvas.
+            Plan events together with polls, availability tracking, tasks, and more.
           </p>
 
           {/* CTA */}
-          <Link
-            to="/login"
-            className="inline-block bg-gradient-to-r from-[#7B61FF] to-[#5A3FFF] text-white px-10 py-4 rounded-xl font-semibold text-lg shadow-2xl hover:shadow-[#7B61FF]/50 hover:scale-[1.02] transition-all duration-700"
-          >
-            Start a Canvas
-          </Link>
+          <div className="flex justify-center">
+            <Link
+              to="/auth"
+              className="inline-flex items-center gap-2 bg-[#75619D] text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl hover:bg-[#624F8A] hover:scale-[1.02] transition-all"
+            >
+              <Calendar className="w-5 h-5" />
+              Create Event
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* Canvas preview */}
-      <section className="py-20 relative">
-        <div className="max-w-6xl mx-auto px-6 text-center">
-          <div className="bg-[#E8E8ED] border border-[#D0D0D8] rounded-2xl p-8 shadow-2xl inline-block">
-            <p className="text-[#1E1E1E] font-semibold mb-2 text-lg">
-              Friday 7 PM — Café Java
-            </p>
-            <p className="text-[#5A5A68] text-sm">
-              6 of 9 tasks done · 8 friends joined
+      {/* Demo preview */}
+      <section className="py-12 relative">
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="bg-white border-2 border-[#E6E4F0] rounded-2xl p-8 shadow-2xl">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-[#75619D] rounded-xl flex items-center justify-center">
+                <Calendar className="w-6 h-6 text-white" strokeWidth={2.5} />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-[#1E1E2F]">Birthday Party</h3>
+                <p className="text-sm text-gray-500">8 participants</p>
+              </div>
+            </div>
+
+            <div className="grid sm:grid-cols-3 gap-4 mb-4">
+              <div className="bg-[#F8F7FC] border border-[#E6E4F0] rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="w-4 h-4 text-[#75619D]" />
+                  <span className="text-xs font-semibold text-[#75619D]">Time Set</span>
+                </div>
+                <p className="text-sm font-medium text-gray-700">Friday, 7:00 PM</p>
+              </div>
+
+              <div className="bg-[#F8F7FC] border border-[#E6E4F0] rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <MapPin className="w-4 h-4 text-[#75619D]" />
+                  <span className="text-xs font-semibold text-[#75619D]">Location</span>
+                </div>
+                <p className="text-sm font-medium text-gray-700">Café Java</p>
+              </div>
+
+              <div className="bg-[#F8F7FC] border border-[#E6E4F0] rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckSquare className="w-4 h-4 text-[#75619D]" />
+                  <span className="text-xs font-semibold text-[#75619D]">Tasks</span>
+                </div>
+                <p className="text-sm font-medium text-gray-700">6 of 9 done</p>
+              </div>
+            </div>
+
+            <p className="text-center text-sm text-gray-500 mt-6">
+              Real-time updates as everyone contributes
             </p>
           </div>
-          <p className="text-[#88889B] text-sm mt-6 font-medium">
-            Your live planning canvas updates as your friends interact.
-          </p>
         </div>
       </section>
 
       {/* Features section */}
-      <section className="py-24 relative">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <h2 className="text-4xl sm:text-5xl font-bold text-white mb-16 tracking-tight">
-            Simple blocks. Smart plans.
-          </h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      <section className="py-20 relative">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl sm:text-5xl font-bold text-[#1E1E2F] mb-4 tracking-tight">
+              Everything you need to plan together
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Interactive blocks that make group coordination effortless
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <FeatureCard
-              icon={<MessageSquare className="w-6 h-6 text-white" strokeWidth={2} />}
-              title="Collaborative Canvas"
-              desc="Everyone can add times, places, and notes. Watch the plan build itself."
-              color="from-[#7B61FF] to-[#5A3FFF]"
+              icon={<Clock className="w-6 h-6 text-white" strokeWidth={2} />}
+              title="Availability Heatmap"
+              desc="See when everyone's free with a visual heatmap. Click to set the event time instantly."
             />
             <FeatureCard
-              icon={<TrendingUp className="w-6 h-6 text-white" strokeWidth={2} />}
-              title="Smart Updates"
-              desc="Gemini summarizes progress automatically — so you always know what's next."
-              color="from-[#9B84FF] to-[#7B61FF]"
+              icon={<Users className="w-6 h-6 text-white" strokeWidth={2} />}
+              title="Real-Time Collaboration"
+              desc="Everyone can vote, add tasks, and share photos. Changes sync instantly across all devices."
             />
             <FeatureCard
-              icon={<CheckCircle className="w-6 h-6 text-white" strokeWidth={2} />}
-              title="Interactive Blocks"
-              desc="RSVPs, polls, and tasks — everything stays neat and fun in one place."
-              color="from-[#7C5CDB] to-[#5A3FFF]"
+              icon={<Sparkles className="w-6 h-6 text-white" strokeWidth={2} />}
+              title="AI-Powered Suggestions"
+              desc="Gemini AI suggests relevant blocks and content based on your event type."
+            />
+            <FeatureCard
+              icon={<MapPin className="w-6 h-6 text-white" strokeWidth={2} />}
+              title="Location Voting"
+              desc="Propose venues and let participants vote on their favorites with visual cards."
+            />
+            <FeatureCard
+              icon={<CheckSquare className="w-6 h-6 text-white" strokeWidth={2} />}
+              title="Task Lists"
+              desc="Create collaborative checklists where participants can claim tasks. No more confusion."
+            />
+            <FeatureCard
+              icon={<Calendar className="w-6 h-6 text-white" strokeWidth={2} />}
+              title="Calendar Export"
+              desc="Export finalized plans to Google Calendar, Apple Calendar, Outlook, and more."
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section className="py-20 bg-gradient-to-br from-[#75619D]/5 to-[#BEAEDB]/5">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl sm:text-5xl font-bold text-[#1E1E2F] mb-4 tracking-tight">
+              Simple, powerful, collaborative
+            </h2>
+            <p className="text-xl text-gray-600">
+              From idea to done in minutes
+            </p>
+          </div>
+
+          <div className="space-y-8">
+            <Step
+              number="1"
+              title="Create your event"
+              description="Give it a name and let AI suggest relevant planning blocks"
+            />
+            <Step
+              number="2"
+              title="Share the link"
+              description="Send one link to all participants. No accounts needed for guests."
+            />
+            <Step
+              number="3"
+              title="Plan together"
+              description="Everyone votes, marks availability, claims tasks, and adds photos in real-time"
+            />
+            <Step
+              number="4"
+              title="Finalize & export"
+              description="Click a time slot to set it, then export to your calendar app"
             />
           </div>
         </div>
@@ -113,97 +204,76 @@ export default function Home() {
 
       {/* CTA section */}
       <section className="py-24 relative overflow-hidden">
-        {/* Purple glow background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#7B61FF]/20 via-[#7B61FF]/10 to-transparent"></div>
-        
+        <div className="absolute inset-0 bg-gradient-to-br from-[#75619D]/10 via-[#BEAEDB]/10 to-transparent"></div>
+
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
-          <h2 className="text-4xl sm:text-5xl font-bold text-white mb-6 tracking-tight">
-            Bring ideas to life. Together.
+          <h2 className="text-4xl sm:text-5xl font-bold text-[#1E1E2F] mb-6 tracking-tight">
+            Stop planning in chaos.<br />Start with alignr.
           </h2>
-          <p className="text-xl text-[#B8B7C9] mb-12 max-w-2xl mx-auto leading-relaxed font-medium">
-            Create your first canvas in under a minute — no sign-ups needed for guests.
+          <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
+            Join thousands who've replaced messy group chats with organized, collaborative event planning.
           </p>
           <Link
-            to="/login"
-            className="inline-block bg-white text-[#7B61FF] px-10 py-4 rounded-xl font-bold text-lg shadow-2xl hover:bg-[#F5F3FF] hover:scale-[1.02] transition-all duration-700"
+            to="/auth"
+            className="inline-flex items-center gap-2 bg-[#75619D] text-white px-10 py-4 rounded-xl font-bold text-lg shadow-xl hover:shadow-2xl hover:bg-[#624F8A] hover:scale-[1.02] transition-all"
           >
-            Start a Canvas
+            <Calendar className="w-5 h-5" />
+            Create Your First Event
           </Link>
-
-          {/* Bottom line */}
-          <p className="mt-10 text-[#88889B] text-sm font-medium">
-            Don't have an account?{' '}
-            <Link
-              to="/signup"
-              className="text-[#7B61FF] hover:text-[#9B84FF] font-semibold transition-colors duration-300"
-            >
-              Sign up
-            </Link>
-          </p>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-[#1E1E29]/60 py-12 mt-auto">
+      <footer className="border-t border-[#E6E4F0] bg-white py-12 mt-auto">
         <div className="max-w-7xl mx-auto px-6 text-center sm:text-left grid sm:grid-cols-3 gap-10">
           <div>
             <div className="flex justify-center sm:justify-start items-center space-x-2.5 mb-4">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
                 <img src={favicon} alt="Alignr" className="w-full h-full object-cover" />
               </div>
-              <span className="text-lg font-semibold text-white">Alignr</span>
+              <span className="text-lg font-bold text-[#3F2A52]">alignr</span>
             </div>
-            <p className="text-[#88889B] text-sm font-medium">
-              Thoughtful planning, beautifully done.
+            <p className="text-gray-600 text-sm">
+              One link, zero chaos — from idea to done.
             </p>
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4 text-white text-sm">Product</h4>
-            <ul className="space-y-2.5 text-[#88889B] text-sm">
+            <h4 className="font-semibold mb-4 text-[#3F2A52] text-sm">Product</h4>
+            <ul className="space-y-2.5 text-gray-600 text-sm">
               <li>
-                <Link to="/signup" className="hover:text-white transition-colors duration-300">
-                  Get Started
+                <Link to="/auth" className="hover:text-[#75619D] transition-colors">
+                  Create Event
                 </Link>
               </li>
               <li>
-                <Link to="/login" className="hover:text-white transition-colors duration-300">
-                  Log In
+                <Link to="/dashboard" className="hover:text-[#75619D] transition-colors">
+                  Dashboard
                 </Link>
-              </li>
-              <li>
-                <a href="#features" className="hover:text-white transition-colors duration-300">
-                  Features
-                </a>
               </li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4 text-white text-sm">Company</h4>
-            <ul className="space-y-2.5 text-[#88889B] text-sm">
+            <h4 className="font-semibold mb-4 text-[#3F2A52] text-sm">Company</h4>
+            <ul className="space-y-2.5 text-gray-600 text-sm">
               <li>
-                <a href="#about" className="hover:text-white transition-colors duration-300">
+                <a href="#about" className="hover:text-[#75619D] transition-colors">
                   About
                 </a>
               </li>
               <li>
-                <a href="#contact" className="hover:text-white transition-colors duration-300">
+                <a href="#contact" className="hover:text-[#75619D] transition-colors">
                   Contact
-                </a>
-              </li>
-              <li>
-                <a href="#privacy" className="hover:text-white transition-colors duration-300">
-                  Privacy
                 </a>
               </li>
             </ul>
           </div>
         </div>
-        
-        <div className="border-t border-[#1E1E29]/60 mt-10 pt-8 text-center">
-          <p className="text-[#88889B] text-sm font-medium">
-            © 2025 Alignr — Better together.
+
+        <div className="border-t border-[#E6E4F0] mt-10 pt-8 text-center">
+          <p className="text-gray-500 text-sm">
+            © 2025 alignr — Built with ❤️ for cleaner group coordination
           </p>
         </div>
       </footer>
@@ -216,17 +286,37 @@ interface FeatureCardProps {
   icon: React.ReactNode;
   title: string;
   desc: string;
-  color: string;
 }
 
-function FeatureCard({ icon, title, desc, color }: FeatureCardProps) {
+function FeatureCard({ icon, title, desc }: FeatureCardProps) {
   return (
-    <div className="bg-[#16161E] border border-[#1E1E29] rounded-2xl p-8 hover:border-[#7B61FF]/40 transition-all duration-500 group">
-      <div className={`w-12 h-12 bg-gradient-to-br ${color} rounded-xl flex items-center justify-center mb-5 shadow-lg group-hover:shadow-[#7B61FF]/50 transition-all duration-500`}>
+    <div className="bg-white border-2 border-[#E6E4F0] rounded-xl p-6 hover:border-[#75619D] hover:shadow-lg transition-all group">
+      <div className="w-12 h-12 bg-gradient-to-br from-[#75619D] to-[#BEAEDB] rounded-xl flex items-center justify-center mb-4 shadow-md group-hover:shadow-lg transition-all">
         {icon}
       </div>
-      <h3 className="text-xl font-bold text-white mb-3 tracking-tight">{title}</h3>
-      <p className="text-[#B8B7C9] leading-relaxed font-medium">{desc}</p>
+      <h3 className="text-lg font-bold text-[#1E1E2F] mb-2">{title}</h3>
+      <p className="text-gray-600 text-sm leading-relaxed">{desc}</p>
+    </div>
+  );
+}
+
+// Step component for "How it works"
+interface StepProps {
+  number: string;
+  title: string;
+  description: string;
+}
+
+function Step({ number, title, description }: StepProps) {
+  return (
+    <div className="flex gap-6 items-start">
+      <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-[#75619D] to-[#BEAEDB] rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
+        {number}
+      </div>
+      <div>
+        <h3 className="text-xl font-bold text-[#1E1E2F] mb-2">{title}</h3>
+        <p className="text-gray-600 leading-relaxed">{description}</p>
+      </div>
     </div>
   );
 }

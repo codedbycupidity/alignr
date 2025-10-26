@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import GridLayout, { Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import { Timestamp } from 'firebase/firestore';
-import type { Block, TimeBlock, LocationBlock as LocationBlockType, BudgetBlock as BudgetBlockType, TaskBlock as TaskBlockType, NoteBlock as NoteBlockType, RSVPBlock as RSVPBlockType, AlbumBlock as AlbumBlockType, BlockLayout } from '../types/block';
+import type { Block, TimeBlock, LocationBlock as LocationBlockType, BudgetBlock as BudgetBlockType, TaskBlock as TaskBlockType, NoteBlock as NoteBlockType, RSVPBlock as RSVPBlockType, AlbumBlock as AlbumBlockType, PollBlock as PollBlockType, BlockLayout } from '../types/block';
 import AvailabilityHeatmap from './AvailabilityHeatmap';
 import LocationBlock from './LocationBlock';
 import BudgetBlock from './BudgetBlock';
@@ -10,6 +10,7 @@ import TaskBlock from './TaskBlock';
 import NoteBlock from './NoteBlock';
 import RSVPBlock from './RSVPBlock';
 import SharedAlbumBlock from './SharedAlbumBlock';
+import PollBlock from './PollBlock';
 import FixedDateTimeDisplay from './FixedDateTimeDisplay';
 import { GripVertical, X } from 'lucide-react';
 
@@ -129,7 +130,10 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, eventI
 
       // Availability mode
       if (tb.content.mode === 'availability') {
-        const dates = tb.content.selectedDates || [];
+        const dateType = tb.content.dateType || 'specific';
+        const dates = dateType === 'specific'
+          ? (tb.content.selectedDates || [])
+          : (tb.content.selectedDays || []);
         const availability = (tb.content.availability || []).map(a => ({
           ...a,
           submittedAt: a.submittedAt.toDate()
@@ -137,6 +141,7 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, eventI
 
         console.log('=== RENDERING TIMEBLOCK ===');
         console.log('Block ID:', tb.id);
+        console.log('Date Type:', dateType);
         console.log('Dates:', dates);
         console.log('Availability array:', availability);
         console.log('Availability length:', availability.length);
@@ -146,6 +151,7 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, eventI
             <AvailabilityHeatmap
               availability={availability}
               dates={dates}
+              dateType={dateType}
               startTime={tb.content.startTime || '09:00'}
               endTime={tb.content.endTime || '17:00'}
               intervalMinutes={tb.content.intervalMinutes || 30}
@@ -336,6 +342,31 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, eventI
             onChange={(images, allowUploads) => {
               onBlockUpdate?.(block.id, {
                 content: { images, allowParticipantUploads: allowUploads }
+              });
+            }}
+          />
+        </div>
+      );
+    }
+
+    // Render PollBlock
+    if (block.type === 'poll') {
+      const pb = block as PollBlockType;
+      const currentUserName = participantNames.get(currentUserId || '') || currentUserId || 'Anonymous';
+
+      return (
+        <div className="h-full overflow-auto">
+          <PollBlock
+            question={pb.content.question || ''}
+            options={pb.content.options || []}
+            allowMultipleVotes={pb.content.allowMultipleVotes ?? false}
+            allowParticipantOptions={pb.content.allowParticipantOptions ?? true}
+            currentUserId={currentUserId}
+            currentUserName={currentUserName}
+            isOrganizer={isOrganizer}
+            onChange={(question, options, allowMultipleVotes, allowParticipantOptions) => {
+              onBlockUpdate?.(block.id, {
+                content: { question, options, allowMultipleVotes, allowParticipantOptions }
               });
             }}
           />

@@ -44,6 +44,7 @@ export const generateEventInsight = functions.https.onCall(async (data: Snowflak
   let winningLocation = '';
   let maxTimeVotes = 0;
   let maxLocationVotes = 0;
+  const pollResults: string[] = [];
 
   const contributorMap = new Map<string, number>();
 
@@ -62,6 +63,27 @@ export const generateEventInsight = functions.https.onCall(async (data: Snowflak
     if (block.type === 'location' && votes > maxLocationVotes) {
       maxLocationVotes = votes;
       winningLocation = block.title;
+    }
+
+    // Track poll results
+    if (block.type === 'poll' && block.content) {
+      const question = block.content.question;
+      const options = block.content.options || [];
+
+      // Find the winning option
+      let maxVotes = 0;
+      let winningOption = '';
+      options.forEach((opt: any) => {
+        const voteCount = opt.votes?.length || 0;
+        if (voteCount > maxVotes) {
+          maxVotes = voteCount;
+          winningOption = opt.text;
+        }
+      });
+
+      if (winningOption && maxVotes > 0) {
+        pollResults.push(`${question}: ${winningOption} (${maxVotes} votes)`);
+      }
     }
 
     // Track top contributor
@@ -93,6 +115,7 @@ Generate a concise 2-3 sentence summary of this event planning session with an u
 - ${totalVotes} total votes
 ${winningTime ? `- Selected time: ${winningTime}` : ''}
 ${winningLocation ? `- Selected location: ${winningLocation}` : ''}
+${pollResults.length > 0 ? `- Poll results:\n${pollResults.map(r => `  - ${r}`).join('\n')}` : ''}
 ${topContributor ? `- Top contributor: ${topContributor.name} (${topContributor.suggestionsCount} suggestions)` : ''}
 
 Use exclamation points where appropriate to convey energy. Focus on the collaborative success and final decisions. No emojis or hashtags.

@@ -20,15 +20,11 @@ export default function EventSummary({ eventId, isOrganizer, eventStatus, blockC
   const [generatedAt, setGeneratedAt] = useState<Date | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  // Don't show component if there are 2 or fewer blocks
-  if (blockCount <= 2) {
-    return null;
-  }
-
   // Load existing insight from Firestore
   useEffect(() => {
+    if (blockCount <= 2) return;
     loadInsight();
-  }, [eventId]);
+  }, [eventId, blockCount]);
 
   const loadInsight = async () => {
     try {
@@ -77,6 +73,11 @@ export default function EventSummary({ eventId, isOrganizer, eventStatus, blockC
       setGenerating(false);
     }
   };
+
+  // Don't show component if there are 2 or fewer blocks
+  if (blockCount <= 2) {
+    return null;
+  }
 
   // Don't show anything if event is not finalized and no insight exists
   if (eventStatus !== 'finalized' && !insight) {

@@ -232,20 +232,11 @@ export default function Dashboard() {
             </div>
           ) : events.length === 0 ? (
             <div className="text-center py-12">
-              <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center mx-auto mb-3 overflow-hidden">
-                <img src={favicon} alt="No events" className="w-full h-full object-cover" />
-              </div>
               <h3 className="text-sm font-medium text-gray-900 mb-1">No events yet</h3>
               <p className="text-sm text-gray-500 mb-4">
                 Create your first event to get started
               </p>
-              <Link
-                to="/event/create"
-                className="inline-flex items-center gap-2 bg-[#75619D] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#75619D]/90 transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                Create Event
-              </Link>
+              
             </div>
           ) : (
             <div className="divide-y divide-gray-200">

@@ -169,15 +169,6 @@ export default function PlanView() {
   const handleSelectTimeSlot = async (date: string, startTime: string, endTime: string) => {
     if (!id) return;
 
-    // Format the date nicely
-    const dateObj = new Date(date + 'T00:00:00');
-    const formattedDate = dateObj.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-
     // Format times to 12-hour
     const formatTime = (time24: string) => {
       const [hour, min] = time24.split(':').map(Number);
@@ -185,6 +176,24 @@ export default function PlanView() {
       const ampm = hour < 12 ? 'AM' : 'PM';
       return `${hour12}:${min.toString().padStart(2, '0')} ${ampm}`;
     };
+
+    // Check if date is a day name (like "Monday") or a date string (like "2025-01-15")
+    const isDayName = /^(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday)$/.test(date);
+
+    let formattedDate: string;
+    if (isDayName) {
+      // For day names, just use the day name
+      formattedDate = date;
+    } else {
+      // For specific dates, format nicely
+      const dateObj = new Date(date + 'T00:00:00');
+      formattedDate = dateObj.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    }
 
     const description = `${formattedDate} • ${formatTime(startTime)} - ${formatTime(endTime)}`;
 

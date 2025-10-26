@@ -4,7 +4,7 @@ import { Timestamp } from 'firebase/firestore';
 // BLOCK BASE TYPES
 // ========================================
 
-export type BlockType = 'time' | 'location' | 'task' | 'note' | 'budget' | 'rsvp' | 'album';
+export type BlockType = 'time' | 'location' | 'task' | 'note' | 'budget' | 'rsvp' | 'album' | 'poll';
 
 export interface BlockLayout {
   x: number; // Grid column position (0-11)
@@ -17,7 +17,7 @@ export interface Block {
   id: string;
   type: BlockType;
   title?: string;
-  content: TimeBlockContent | LocationBlockContent | TaskBlockContent | NoteBlockContent | BudgetBlockContent | RSVPBlockContent | AlbumBlockContent;
+  content: TimeBlockContent | LocationBlockContent | TaskBlockContent | NoteBlockContent | BudgetBlockContent | RSVPBlockContent | AlbumBlockContent | PollBlockContent;
   order: number;
   author: string;
   layout: BlockLayout; // Position and size on canvas
@@ -201,4 +201,26 @@ export interface AlbumBlockContent {
 export interface AlbumBlock extends Block {
   type: 'album';
   content: AlbumBlockContent;
+}
+
+// ========================================
+// POLL BLOCK
+// ========================================
+
+export interface PollOption {
+  id: string;
+  text: string;
+  votes: string[]; // participant IDs who voted
+}
+
+export interface PollBlockContent {
+  question: string;
+  options: PollOption[];
+  allowMultipleVotes: boolean;
+  allowParticipantOptions: boolean;
+}
+
+export interface PollBlock extends Block {
+  type: 'poll';
+  content: PollBlockContent;
 }

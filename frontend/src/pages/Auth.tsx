@@ -135,7 +135,7 @@ export default function Auth() {
                       placeholder:text-gray-400
                       focus:outline-none focus:ring-2 focus:ring-[#75619D] focus:border-transparent
                       transition-colors"
-                    placeholder="3212308763"
+                    placeholder="3212345678"
                     required
                   />
                   <p className="mt-1.5 text-xs text-gray-500">

@@ -240,10 +240,15 @@ export default function JoinEvent() {
   }
 
   // Get time/date data from TimeBlock instead of event
+  const dateType = timeBlock?.content.dateType || 'specific';
   const eventDates = timeBlock?.content.selectedDates || [];
+  const eventDays = timeBlock?.content.selectedDays || [];
   const eventStartTime = timeBlock?.content.startTime || '09:00';
   const eventEndTime = timeBlock?.content.endTime || '17:00';
   const intervalMinutes = timeBlock?.content.intervalMinutes || 30;
+
+  // Check if availability tracking is properly set up
+  const hasAvailabilitySetup = dateType === 'specific' ? eventDates.length > 0 : eventDays.length > 0;
 
   return (
     <div className="min-h-screen bg-white px-4 py-12">
@@ -421,15 +426,16 @@ export default function JoinEvent() {
                 </div>
               )}
 
-              {eventDates.length > 0 ? (
+              {hasAvailabilitySetup ? (
                 <div className="mb-4">
                   <AvailabilityGrid
-                    dates={eventDates}
+                    dates={dateType === 'specific' ? eventDates : eventDays}
                     startTime={eventStartTime}
                     endTime={eventEndTime}
                     intervalMinutes={intervalMinutes}
                     initialAvailability={initialAvailability}
                     onAvailabilityChange={setAvailability}
+                    dateType={dateType}
                   />
                 </div>
               ) : (

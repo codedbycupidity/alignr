@@ -218,6 +218,14 @@ export function useBlockHandlers({
         order: blocks.length,
         author: authorId
       };
+    } else if (blockType === 'poll') {
+      newBlock = {
+        type: 'poll' as const,
+        content: { question: '', options: [], allowMultipleVotes: false, allowParticipantOptions: true },
+        layout: { x: 0, y: blocks.length * 2, w: 5, h: 4 },
+        order: blocks.length,
+        author: authorId
+      };
     } else {
       console.log('Unknown block type:', blockType);
       return;

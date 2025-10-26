@@ -33,6 +33,7 @@ export default function PlanView() {
   const [participantCount, setParticipantCount] = useState(0);
   const [showTaskSuggestionsModal, setShowTaskSuggestionsModal] = useState(false);
   const [addingTaskBlock, setAddingTaskBlock] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Get participant ID from localStorage if user is not logged in
   useEffect(() => {
@@ -218,158 +219,72 @@ export default function PlanView() {
       layout
     };
 
-    await addBlock(id, newBlock);
+    try {
+      await addBlock(id, newBlock);
+      const updatedBlocks = await getBlocks(id);
+      setBlocks(updatedBlocks);
+      setShowTimeBlockModal(false);
+      setDraggingSuggestion(null);
+      setIsDragging(false);
+    } catch (error) {
+      console.error('Error adding time block:', error);
+    }
+  };
 
-    // Reload blocks
-    const updatedBlocks = await getBlocks(id);
-    setBlocks(updatedBlocks);
-    setSuggestions([]); // Clear suggestions after adding a block
-    setDraggingSuggestion(null);
+  const handleSuggestionClick = async (suggestion: BlockSuggestion) => {
+    if (suggestion.blockType === 'time') {
+      setShowTimeBlockModal(true);
+    }
+  };
+
+  const handleDragStart = (e: React.DragEvent, suggestion: BlockSuggestion) => {
+    setDraggingSuggestion(suggestion);
+    setIsDragging(true);
+    setDragPosition({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleDrag = (e: React.DragEvent) => {
+    setDragPosition({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+  };
+
+  const handleCanvasDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleCanvasDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    if (draggingSuggestion?.blockType === 'time') {
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      const dropPosition = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      setShowTimeBlockModal(true);
+      setDragPosition(dropPosition);
+    }
     setIsDragging(false);
   };
 
   const handleLayoutChange = async (blockId: string, layout: BlockLayout) => {
     if (!id) return;
-
     try {
-      await updateBlock(id, blockId, { layout });
-      console.log('Block layout updated:', blockId, layout);
+      const blockToUpdate = blocks.find(b => b.id === blockId);
+      if (!blockToUpdate) return;
+
+      const updatedBlock = { ...blockToUpdate, layout };
+      await updateBlock(id, blockId, updatedBlock);
     } catch (error) {
-      console.error('Error updating block layout:', error);
+      console.error('Error updating layout:', error);
     }
   };
 
-  const handleSuggestionClick = async (suggestion: BlockSuggestion) => {
-    console.log('Clicked suggestion:', suggestion);
-    if (!id) return;
-
-    if (suggestion.blockType === 'time') {
-      console.log('Opening time block modal');
-      setShowTimeBlockModal(true);
-    } else if (suggestion.blockType === 'task') {
-      console.log('Opening task suggestions modal');
-      setShowTaskSuggestionsModal(true);
-    } else if (suggestion.blockType === 'location') {
-      const newBlock = {
-        type: 'location' as const,
-        content: {
-          options: []
-        },
-        layout: {
-          x: 0,
-          y: blocks.length * 2,
-          w: 6,
-          h: 3
-        },
-        order: blocks.length,
-        author: user?.id || participantId || 'anonymous'
-      };
-      await addBlock(id, newBlock);
-      const updatedBlocks = await getBlocks(id);
-      setBlocks(updatedBlocks);
-      setSuggestions([]);
-    } else if (suggestion.blockType === 'budget') {
-      const newBlock = {
-        type: 'budget' as const,
-        content: {
-          responses: []
-        },
-        layout: {
-          x: 0,
-          y: blocks.length * 2,
-          w: 4,
-          h: 3
-        },
-        order: blocks.length,
-        author: user?.id || participantId || 'anonymous'
-      };
-      await addBlock(id, newBlock);
-      const updatedBlocks = await getBlocks(id);
-      setBlocks(updatedBlocks);
-      setSuggestions([]);
-    } else {
-      alert(`Block type "${suggestion.blockType}" not yet implemented`);
-    }
-  };
-
-  const handleDragStart = (e: React.DragEvent, suggestion: BlockSuggestion) => {
-    e.dataTransfer.effectAllowed = 'copy';
-    setDraggingSuggestion(suggestion);
-    setIsDragging(true);
-
-    // Open modal immediately when drag starts
-    if (suggestion.blockType === 'time') {
-      setShowTimeBlockModal(true);
-    }
-  };
-
-  const handleDrag = (e: React.DragEvent) => {
-    if (e.clientX !== 0 && e.clientY !== 0) {
-      setDragPosition({ x: e.clientX, y: e.clientY });
-    }
-  };
-
-  const handleDragEnd = () => {
-    setIsDragging(false);
-    // Don't clear draggingSuggestion yet - wait for drop or cancel
-  };
-
-  const handleCanvasDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'copy';
-  };
-
-  const handleCanvasDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-
-    if (draggingSuggestion && showTimeBlockModal) {
-      // Store drop position for when modal confirms
-      setDragPosition({ x: e.clientX, y: e.clientY });
-      // Modal is already open from drag start, user will configure and confirm
-    }
-  };
-
-  // Find TimeBlock with availability mode (for participant count)
-  const timeBlock = blocks.find(
-    (block): block is TimeBlock => {
-      if (block.type === 'time') {
-        const tb = block as TimeBlock;
-        return tb.content.mode === 'availability';
-      }
-      return false;
-    }
-  ) as TimeBlock | undefined;
-
-  // Find TimeBlock with fixed mode (for header display)
+  const timeBlock = blocks.find(b => b.type === 'time') as TimeBlock | undefined;
   const fixedTimeBlock = blocks.find(
-    (block): block is TimeBlock => {
-      if (block.type === 'time') {
-        const tb = block as TimeBlock;
-        return tb.content.mode === 'fixed';
-      }
-      return false;
-    }
+    b => b.type === 'time' && (b as TimeBlock).content.mode === 'fixed'
   ) as TimeBlock | undefined;
 
-  // Filter out fixed time blocks from canvas display
-  const canvasBlocks = blocks.filter(block => {
-    if (block.type === 'time') {
-      const tb = block as TimeBlock;
-      return tb.content.mode !== 'fixed';
-    }
-    return true;
-  });
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#FAFAFB] flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#7B61FF] mb-4"></div>
-          <p className="text-lg font-semibold text-[#1E1E2F]">Loading plan...</p>
-        </div>
-      </div>
-    );
-  }
+  const canvasBlocks = blocks.filter(b => b.type !== 'note');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#FAFAFB] via-white to-[#F5F3FF]">
@@ -387,64 +302,87 @@ export default function PlanView() {
       {/*Main content */}
       <main className="flex max-w-7xl mx-auto">
         {/* Left Sidebar - Block Suggestions */}
-        {user?.id === event?.organizerId && (
+        {user?.id === event?.organizerId && sidebarOpen && (
           <BlockSuggestionsSidebar
             loadingSuggestions={loadingSuggestions}
             suggestions={suggestions}
             existingBlocks={blocks}
+            isOpen={sidebarOpen}                           
+            onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}  
             onSuggestionClick={handleSuggestionClick}
             onDragStart={handleDragStart}
             onDrag={handleDrag}
             onDragEnd={handleDragEnd}
             onAddBlock={async (blockType) => {
-              if (blockType === 'time') {
-                setShowTimeBlockModal(true);
-              } else if (blockType === 'location') {
-                // Add empty location block
-                const newBlock = {
-                  type: 'location' as const,
-                  content: {
-                    options: []
-                  },
-                  layout: {
-                    x: 0,
-                    y: blocks.length * 2,
-                    w: 6,
-                    h: 3
-                  },
-                  order: blocks.length,
-                  author: user?.id || participantId || 'anonymous'
-                };
-                await addBlock(id!, newBlock);
-                const updatedBlocks = await getBlocks(id!);
-                setBlocks(updatedBlocks);
-              } else if (blockType === 'budget') {
-                // Add empty budget block
-                const newBlock = {
-                  type: 'budget' as const,
-                  content: {
-                    responses: []
-                  },
-                  layout: {
-                    x: 0,
-                    y: blocks.length * 2,
-                    w: 4,
-                    h: 3
-                  },
-                  order: blocks.length,
-                  author: user?.id || participantId || 'anonymous'
-                };
-                await addBlock(id!, newBlock);
-                const updatedBlocks = await getBlocks(id!);
-                setBlocks(updatedBlocks);
-              } else if (blockType === 'task') {
-                // Show task suggestions modal
-                setShowTaskSuggestionsModal(true);
-              } else {
-                // TODO: Handle other block types
-                console.log('Add block type:', blockType);
-              }
-            }}
+  if (blockType === 'time') {
+    setShowTimeBlockModal(true);
+  } else if (blockType === 'location') {
+    // Add empty location block
+    const newBlock = {
+      type: 'location' as const,
+      content: {
+        options: []
+      },
+      layout: {
+        x: 0,
+        y: blocks.length * 2,
+        w: 6,
+        h: 3
+      },
+      order: blocks.length,
+      author: user?.id || participantId || 'anonymous'
+    };
+    await addBlock(id!, newBlock);
+        const updatedBlocks = await getBlocks(id!);
+        setBlocks(updatedBlocks);
+      } else if (blockType === 'budget') {
+        // Add empty budget block
+        const newBlock = {
+          type: 'budget' as const,
+          content: {
+            responses: []
+          },
+          layout: {
+            x: 0,
+            y: blocks.length * 2,
+            w: 4,
+            h: 3
+          },
+          order: blocks.length,
+          author: user?.id || participantId || 'anonymous'
+        };
+        await addBlock(id!, newBlock);
+        const updatedBlocks = await getBlocks(id!);
+        setBlocks(updatedBlocks);
+      } else if (blockType === 'task') {
+        // Show task suggestions modal
+        setShowTaskSuggestionsModal(true);
+      } else if (blockType === 'note') {
+        // Add empty note block
+        const newBlock = {
+          type: 'note' as const,
+          content: {
+            text: '',
+            comments: []
+          },
+          layout: {
+            x: 0,
+            y: blocks.length * 2,
+            w: 5,
+            h: 3
+          },
+          order: blocks.length,
+          author: user?.id || participantId || 'anonymous'
+        };
+        await addBlock(id!, newBlock);
+        const updatedBlocks = await getBlocks(id!);
+        setBlocks(updatedBlocks);
+      } else {
+        // TODO: Handle other block types
+        console.log('Add block type:', blockType);
+      }
+    }}
+
           />
         )}
 

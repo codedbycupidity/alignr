@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { initializeApp } from 'firebase/app';
 
-// Initialize Firebase
+//Initialize Firebase
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -19,6 +19,7 @@ interface AnalyticsResult {
   insights: string;
   dataCount: number;
   rawData?: unknown[];
+  success?: boolean;
 }
 
 const Analytics = () => {

@@ -8,7 +8,8 @@ import {
   Share2,
   Plus,
   Lock,
-  Unlock
+  Unlock,
+  ChevronLeft
 } from 'lucide-react';
 
 // Import block system
@@ -36,6 +37,7 @@ export default function PlanCreator() {
   const [eventName, setEventName] = useState('Untitled Event');
   const [isEditingName, setIsEditingName] = useState(false);
   const [globalEditAccess, setGlobalEditAccess] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Generate unique plan ID on mount if creating new plan
   useEffect(() => {
@@ -98,8 +100,8 @@ export default function PlanCreator() {
     <div className="h-screen flex flex-col bg-[#FAFAFB]">
       
       {/* Top bar */}
-      <nav className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shadow-sm">
-        <div className="flex items-center space-x-4">
+      <nav className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-center shadow-sm relative">
+        <div className="absolute left-6 flex items-center space-x-4">
           <Link to="/" className="flex items-center space-x-2.5">
             <div className="w-8 h-8 bg-gradient-to-br from-[#7B61FF] to-[#A78BFA] rounded-lg flex items-center justify-center shadow-sm">
               <Calendar className="w-4.5 h-4.5 text-white" strokeWidth={2.5} />
@@ -108,7 +110,7 @@ export default function PlanCreator() {
           </Link>
         </div>
 
-        {/* Event name (editable) */}
+        {/* Event name (editable) - Centered */}
         <div className="flex-1 flex justify-center">
           {isEditingName ? (
             <input
@@ -130,7 +132,7 @@ export default function PlanCreator() {
           )}
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="absolute right-6 flex items-center space-x-3">
           {/* 🔥 GLOBAL EDIT ACCESS TOGGLE BUTTON - TOP RIGHT CORNER */}
           <button
             onClick={toggleGlobalEditAccess}
@@ -175,53 +177,70 @@ export default function PlanCreator() {
       <div className="flex flex-1 overflow-hidden">
         
         {/* Left sidebar - Toolbox */}
-        <aside className="w-64 bg-white shadow-md border-r border-gray-100 p-6 overflow-y-auto">
-          <h3 className="text-sm font-bold text-[#1E1E2F] uppercase tracking-wide mb-4">
-            Add Blocks
-          </h3>
-          
-          <div className="space-y-3">
-            {getBlockTypes().map(type => {
-              const config = getBlockConfig(type);
-              const Icon = config.icon;
-              return (
-                <button
-                  key={type}
-                  onClick={() => handleAddBlock(type)}
-                  className="w-full flex items-center space-x-3 p-3 bg-gray-50 hover:bg-[#F4F0FF] border border-gray-200 hover:border-[#C5B8FF] hover:shadow-lg rounded-lg transition-all duration-300 group"
+        <aside className={`bg-white shadow-md border-r border-gray-100 p-6 overflow-y-auto transition-all duration-300 ${
+          sidebarOpen ? 'w-64' : 'w-20'
+        }`}>
+          <div className="flex items-center justify-between mb-4">
+            {sidebarOpen && (
+              <h3 className="text-sm font-bold text-[#1E1E2F] uppercase tracking-wide">
+                Add Blocks
+              </h3>
+            )}
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-1 hover:bg-gray-100 rounded-lg transition-colors ml-auto"
+              title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+            >
+              <ChevronLeft className={`w-5 h-5 text-gray-500 hover:text-gray-700 transition-transform duration-300 ${!sidebarOpen ? 'rotate-180' : ''}`} />
+            </button>
+          </div>
+            
+            {sidebarOpen && (
+              <>
+                <div className="space-y-3">
+                  {getBlockTypes().map(type => {
+                    const config = getBlockConfig(type);
+                    const Icon = config.icon;
+                    return (
+                      <button
+                        key={type}
+                        onClick={() => handleAddBlock(type)}
+                        className="w-full flex items-center space-x-3 p-3 bg-gray-50 hover:bg-[#F4F0FF] border border-gray-200 hover:border-[#C5B8FF] hover:shadow-lg rounded-lg transition-all duration-300 group"
+                      >
+                        <div className="w-9 h-9 bg-white border border-gray-200 group-hover:border-[#7B61FF] rounded-lg flex items-center justify-center transition-all duration-300">
+                          <Icon className="w-4 h-4 text-[#1E1E2F] group-hover:text-[#7B61FF] transition-colors" strokeWidth={2} />
+                        </div>
+                        <span className="text-sm font-medium text-[#1E1E2F] group-hover:text-[#7B61FF] transition-colors">
+                          {config.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button 
+                  className="w-full mt-6 px-4 py-3 bg-gradient-to-r from-[#7B61FF] to-[#A78BFA] text-white rounded-lg font-semibold text-sm shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-2"
+                  onClick={() => handleAddBlock('note')}
                 >
-                  <div className="w-9 h-9 bg-white border border-gray-200 group-hover:border-[#7B61FF] rounded-lg flex items-center justify-center transition-all duration-300">
-                    <Icon className="w-4 h-4 text-[#1E1E2F] group-hover:text-[#7B61FF] transition-colors" strokeWidth={2} />
-                  </div>
-                  <span className="text-sm font-medium text-[#1E1E2F] group-hover:text-[#7B61FF] transition-colors">
-                    {config.label}
-                  </span>
+                  <Plus className="w-4 h-4" strokeWidth={2.5} />
+                  <span>New Block</span>
                 </button>
-              );
-            })}
-          </div>
 
-          <button 
-            className="w-full mt-6 px-4 py-3 bg-gradient-to-r from-[#7B61FF] to-[#A78BFA] text-white rounded-lg font-semibold text-sm shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-2"
-            onClick={() => handleAddBlock('note')}
-          >
-            <Plus className="w-4 h-4" strokeWidth={2.5} />
-            <span>New Block</span>
-          </button>
-
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <div className="flex items-center space-x-2 mb-3">
-              <div className={`w-3 h-3 rounded-full transition-colors ${globalEditAccess ? 'bg-[#7B61FF]' : 'bg-gray-300'}`}></div>
-              <p className="text-xs font-semibold text-[#1E1E2F]">
-                {globalEditAccess ? 'Public Edit: ON' : 'Public Edit: OFF'}
-              </p>
-            </div>
-            <p className="text-xs text-gray-500 leading-relaxed">
-              {globalEditAccess 
-                ? 'Anyone with the link can edit all blocks' 
-                : 'Only you can edit blocks. Click the lock icon above to enable public editing.'}
-            </p>
-          </div>
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <div className={`w-3 h-3 rounded-full transition-colors ${globalEditAccess ? 'bg-[#7B61FF]' : 'bg-gray-300'}`}></div>
+                    <p className="text-xs font-semibold text-[#1E1E2F]">
+                      {globalEditAccess ? 'Public Edit: ON' : 'Public Edit: OFF'}
+                    </p>
+                  </div>
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    {globalEditAccess 
+                      ? 'Anyone with the link can edit all blocks' 
+                      : 'Only you can edit blocks. Click the lock icon above to enable public editing.'}
+                  </p>
+                </div>
+              </>
+            )}
         </aside>
 
         {/* Main canvas */}

@@ -2,11 +2,12 @@ import { useCallback } from 'react';
 import GridLayout, { Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import { Timestamp } from 'firebase/firestore';
-import type { Block, TimeBlock, LocationBlock as LocationBlockType, BudgetBlock as BudgetBlockType, TaskBlock as TaskBlockType, BlockLayout } from '../types/block';
+import type { Block, TimeBlock, LocationBlock as LocationBlockType, BudgetBlock as BudgetBlockType, TaskBlock as TaskBlockType, NoteBlock as NoteBlockType, BlockLayout } from '../types/block';
 import AvailabilityHeatmap from './AvailabilityHeatmap';
 import LocationBlock from './LocationBlock';
 import BudgetBlock from './BudgetBlock';
 import TaskBlock from './TaskBlock';
+import NoteBlock from './NoteBlock';
 import FixedDateTimeDisplay from './FixedDateTimeDisplay';
 import { GripVertical, X } from 'lucide-react';
 
@@ -118,7 +119,7 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, onLayo
       return (
         <div className="h-full flex flex-col">
           <div className="text-sm font-medium text-gray-700">
-            {block.type.toUpperCase()} BLOCK
+            {String(block.type).toUpperCase()} BLOCK
           </div>
           <div className="text-xs text-gray-500 mt-1">
             {block.title || 'Untitled'}
@@ -223,11 +224,39 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, onLayo
       );
     }
 
+    // Render NoteBlock
+    if (block.type === 'note') {
+      const nb = block as NoteBlockType;
+      const currentUserName = participantNames.get(currentUserId || '') || currentUserId || 'Anonymous';
+
+      return (
+        <div className="h-full overflow-auto">
+          <NoteBlock
+            text={nb.content.text || ''}
+            lastEditedBy={nb.content.lastEditedBy}
+            comments={nb.content.comments || []}
+            currentUserId={currentUserId}
+            currentUserName={currentUserName}
+            isOrganizer={isOrganizer}
+            onNoteChange={(updatedText, updatedComments, lastEditedBy) => {
+              onBlockUpdate?.(block.id, {
+                content: {
+                  text: updatedText,
+                  comments: updatedComments,
+                  lastEditedBy
+                }
+              });
+            }}
+          />
+        </div>
+      );
+    }
+
     // Placeholder for other block types
     return (
       <div className="h-full flex flex-col">
         <div className="text-sm font-medium text-gray-700">
-          {block.type.toUpperCase()} BLOCK
+          {String(block.type).toUpperCase()} BLOCK
         </div>
         <div className="text-xs text-gray-500 mt-1">
           {block.title || 'Untitled'}
@@ -284,7 +313,7 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, onLayo
               <div className={`flex items-center gap-2 flex-1 ${isOrganizer ? 'drag-handle cursor-move hover:bg-gray-100' : ''}`}>
                 {isOrganizer && <GripVertical className="w-4 h-4 text-gray-400" />}
                 <span className="text-xs font-medium text-gray-600">
-                  {block.title || block.type.toUpperCase()}
+                  {block.title || String(block.type).toUpperCase()}
                 </span>
               </div>
               {isOrganizer && (

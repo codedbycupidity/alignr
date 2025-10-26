@@ -1,40 +1,249 @@
+import { MessageSquare, Plus, X, Edit2, Check } from 'lucide-react';
 import { useState } from 'react';
-import { MessageSquare } from 'lucide-react';
+import type { Comment } from '../types/block';
 
 interface NoteBlockProps {
-  content: string;
-  editable?: boolean;
-  onChange?: (content: string) => void;
+  text: string;
+  lastEditedBy?: string;
+  comments?: Comment[];
+  currentUserId?: string;
+  currentUserName?: string;
+  isOrganizer?: boolean;
+  onNoteChange?: (text: string, comments: Comment[], lastEditedBy?: string) => void;
 }
 
-export default function NoteBlock({ content, editable = true, onChange }: NoteBlockProps) {
-  const [noteContent, setNoteContent] = useState(content);
+export default function NoteBlock({
+  text,
+  lastEditedBy,
+  comments = [],
+  currentUserId,
+  currentUserName,
+  isOrganizer = false,
+  onNoteChange
+}: NoteBlockProps) {
+  const [noteText, setNoteText] = useState(text || '');
+  const [isEditing, setIsEditing] = useState(false);
+  const [showAddComment, setShowAddComment] = useState(false);
+  const [newComment, setNewComment] = useState('');
+  const [savingComment, setSavingComment] = useState(false);
 
-  const handleChange = (newContent: string) => {
-    setNoteContent(newContent);
-    onChange?.(newContent);
+  const handleSaveNote = async () => {
+    if (noteText.trim() === (text || '')) {
+      setIsEditing(false);
+      return;
+    }
+
+    onNoteChange?.(
+      noteText.trim(),
+      comments,
+      currentUserId || currentUserName
+    );
+    setIsEditing(false);
+  };
+
+  const handleCancelEdit = () => {
+    setNoteText(text || '');
+    setIsEditing(false);
+  };
+
+  const handleAddComment = async () => {
+    if (!newComment.trim() || !currentUserId || !currentUserName) return;
+
+    setSavingComment(true);
+    try {
+      const updatedComments = [
+        ...comments,
+        {
+          id: `comment-${Date.now()}`,
+          author: currentUserName,
+          text: newComment.trim(),
+          createdAt: new Date() as any
+        }
+      ];
+
+      onNoteChange?.(text, updatedComments, lastEditedBy);
+      setNewComment('');
+      setShowAddComment(false);
+    } finally {
+      setSavingComment(false);
+    }
+  };
+
+  const handleDeleteComment = (commentId: string) => {
+    if (!isOrganizer) return;
+
+    const updatedComments = comments.filter(c => c.id !== commentId);
+    onNoteChange?.(text, updatedComments, lastEditedBy);
+  };
+
+  const formatDate = (timestamp: any) => {
+    if (!timestamp) return '';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   return (
-    <div className="drag-handle p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:border-purple-300 transition-all duration-300 cursor-grab active:cursor-grabbing w-64">
-      <div className="flex items-start space-x-2 mb-2">
-        <MessageSquare className="w-4 h-4 text-[#7B61FF] mt-0.5 flex-shrink-0" strokeWidth={2} />
-        {editable ? (
-          <textarea
-            value={noteContent}
-            onChange={(e) => handleChange(e.target.value)}
-            className="flex-1 text-sm text-[#1E1E2F] bg-transparent border-none outline-none resize-none font-medium"
-            rows={3}
-            placeholder="Type your note..."
-          />
+    <div className="space-y-4">
+      {/* Note Content Section */}
+      <div className="bg-white border border-gray-200 rounded-lg p-4">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <MessageSquare className="w-5 h-5 text-[#75619D]" strokeWidth={2} />
+            <h3 className="text-sm font-semibold text-gray-900">Notes</h3>
+          </div>
+          {isOrganizer && !isEditing && (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Edit note"
+            >
+              <Edit2 className="w-4 h-4 text-gray-500 hover:text-[#75619D]" />
+            </button>
+          )}
+        </div>
+
+        {isEditing && isOrganizer ? (
+          <div className="space-y-2">
+            <textarea
+              value={noteText}
+              onChange={(e) => setNoteText(e.target.value)}
+              placeholder="Type your note here..."
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#75619D] focus:border-transparent resize-none"
+              rows={4}
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={handleSaveNote}
+                className="flex-1 px-3 py-2 bg-[#75619D] text-white text-sm rounded-lg hover:bg-[#624F8A] transition-colors flex items-center justify-center gap-2 font-medium"
+              >
+                <Check className="w-4 h-4" />
+                Save Note
+              </button>
+              <button
+                onClick={handleCancelEdit}
+                className="px-3 py-2 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         ) : (
-          <p className="flex-1 text-sm text-[#1E1E2F] font-medium">{noteContent}</p>
+          <div className="min-h-12 p-3 bg-gray-50 rounded-lg">
+            {noteText ? (
+              <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-wrap">
+                {noteText}
+              </p>
+            ) : (
+              <p className="text-sm text-gray-400 italic">
+                {isOrganizer ? 'Click the edit button to add a note' : 'No notes yet'}
+              </p>
+            )}
+          </div>
+        )}
+
+        {lastEditedBy && !isEditing && (
+          <div className="mt-2 text-xs text-gray-400">
+            Last edited by {lastEditedBy}
+          </div>
         )}
       </div>
-      {!editable && (
-        <div className="mt-2 text-xs text-gray-400 flex items-center space-x-1">
-          <span>🔒</span>
-          <span>View only</span>
+
+      {/* Comments Section */}
+      {comments && comments.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <h3 className="text-sm font-semibold text-gray-900 mb-3">
+            Comments ({comments.length})
+          </h3>
+          <div className="space-y-2">
+            {comments.map((comment) => (
+              <div
+                key={comment.id}
+                className="bg-gray-50 border border-gray-200 rounded-lg p-3"
+              >
+                <div className="flex items-start justify-between mb-1">
+                  <div>
+                    <span className="text-sm font-medium text-gray-900">
+                      {comment.author}
+                    </span>
+                    <span className="text-xs text-gray-400 ml-2">
+                      {formatDate(comment.createdAt)}
+                    </span>
+                  </div>
+                  {isOrganizer && (
+                    <button
+                      onClick={() => handleDeleteComment(comment.id)}
+                      className="p-1 hover:bg-gray-200 rounded transition-colors"
+                      title="Delete comment"
+                    >
+                      <X className="w-3.5 h-3.5 text-gray-500 hover:text-red-600" />
+                    </button>
+                  )}
+                </div>
+                <p className="text-sm text-gray-700">
+                  {comment.text}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Add Comment Section */}
+      {showAddComment && currentUserId && (
+        <div className="bg-white border-2 border-[#75619D] rounded-lg p-3 space-y-2">
+          <textarea
+            placeholder="Add a comment..."
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#75619D] focus:border-transparent resize-none"
+            rows={2}
+            autoFocus
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={handleAddComment}
+              disabled={savingComment || !newComment.trim()}
+              className="flex-1 px-3 py-2 bg-[#75619D] text-white text-sm rounded-lg hover:bg-[#624F8A] disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            >
+              {savingComment ? 'Adding...' : 'Add Comment'}
+            </button>
+            <button
+              onClick={() => {
+                setShowAddComment(false);
+                setNewComment('');
+              }}
+              className="px-3 py-2 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Add Comment Button */}
+      {!showAddComment && currentUserId && (
+        <button
+          onClick={() => setShowAddComment(true)}
+          className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-[#75619D] hover:text-[#75619D] transition-colors flex items-center justify-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          <span className="text-sm font-medium">Add Comment</span>
+        </button>
+      )}
+
+      {/* Empty State */}
+      {!noteText && comments.length === 0 && (
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+          <MessageSquare className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+          <p className="text-sm text-gray-600">
+            {isOrganizer ? 'Add a note or let participants comment' : 'Waiting for notes and comments'}
+          </p>
         </div>
       )}
     </div>

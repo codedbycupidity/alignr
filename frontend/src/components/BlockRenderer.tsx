@@ -66,12 +66,30 @@ export default function BlockRenderer({ block, onUpdate, isOrganizer }: BlockRen
       props.onChange = (items: string[]) => onUpdate(block.id, { items });
       break;
     case 'poll':
-      props.options = block.options || [];
-      props.onChange = (options: any[]) => onUpdate(block.id, { options });
+      const pollContent = (block as any).content || {
+        title: block.title || 'Quick Poll',
+        allowMultipleVotes: false,
+        options: [{ id: 'default', text: 'Option 1', votes: 0, voters: [] }],
+        totalVotes: 0
+      };
+      props.block = {
+        id: block.id,
+        type: 'poll',
+        content: pollContent
+      };
+      props.onChange = (content: any) => onUpdate(block.id, { content });
       break;
     case 'rsvp':
-      props.people = block.people || [];
-      props.onChange = (people: string[]) => onUpdate(block.id, { people });
+      const rsvpContent = (block as any).content || {
+        responses: [],
+        allowMaybe: true
+      };
+      props.block = {
+        id: block.id,
+        type: 'rsvp',
+        content: rsvpContent
+      };
+      props.onChange = (content: any) => onUpdate(block.id, { content });
       break;
   }
 

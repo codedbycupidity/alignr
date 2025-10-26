@@ -15,20 +15,8 @@ import RsvpBlock from './RSVP_Block';
 import VotingBlock from './Voting_Block';
 import ImageBlock from './ImageBlock';
 
-export type BlockType = 'note' | 'checklist' | 'poll' | 'rsvp' | 'gemmi' | 'image';
-
-export interface Block {
-  id: number;
-  type: BlockType;
-  title?: string;
-  x: number;
-  y: number;
-  content?: string;
-  items?: string[];
-  options?: { text: string; votes: number; voters: string[] }[];
-  people?: string[];
-  editableByAll?: boolean;
-}
+// Import shared types
+import { Block, BlockType, PollOption, PollBlockContent, RsvpResponse, RsvpBlockContent } from '../types/block';
 
 export interface BlockConfig {
   type: BlockType;
@@ -37,10 +25,20 @@ export interface BlockConfig {
   component: React.ComponentType<any>;
   defaultData: {
     title?: string;
-    content?: string;
-    items?: string[];
-    options?: { text: string; votes: number; voters: string[] }[];
-    people?: string[];
+  } & BlockContent;
+}
+
+import React from 'react';
+
+export interface BlockConfig {
+  type: BlockType;
+  label: string;
+  icon: LucideIcon;
+  component: React.ComponentType<any>;
+  defaultData: {
+    title: string;
+    type: BlockType;
+    content: any;
   };
 }
 
@@ -53,37 +51,59 @@ export const BLOCK_REGISTRY: Record<BlockType, BlockConfig> = {
     component: NoteBlock,
     defaultData: {
       title: 'Notes',
-      content: 'New note...'
+      type: 'note',
+      content: {
+        text: 'New note...',
+        comments: []
+      }
     }
   },
-  checklist: {
-    type: 'checklist',
-    label: 'Checklist',
+  task: {
+    type: 'task',
+    label: 'Tasks',
     icon: Check,
     component: ChecklistBlock,
     defaultData: {
       title: 'Tasks',
-      items: ['New task']
+      type: 'task',
+      content: {
+        tasks: []
+      }
     }
   },
   poll: {
     type: 'poll',
-    label: 'Time Voting',
+    label: 'Poll',
     icon: BarChart3,
     component: VotingBlock,
     defaultData: {
-      title: 'Find the best time',
-      options: [{ text: 'Option 1', votes: 0, voters: [] }]
+      title: 'Quick Poll',
+      type: 'poll',
+      content: {
+        title: 'Quick Poll',
+        allowMultipleVotes: false,
+        options: [{ 
+          id: `option-${Date.now()}`, 
+          text: 'Option 1', 
+          votes: 0, 
+          voters: [] 
+        }],
+        totalVotes: 0
+      }
     }
   },
   rsvp: {
     type: 'rsvp',
-    label: 'RSVP List',
+    label: 'RSVP',
     icon: Users,
     component: RsvpBlock,
     defaultData: {
-      title: 'Attendees',
-      people: []
+      title: 'RSVP',
+      type: 'rsvp',
+      content: {
+        responses: [],
+        allowMaybe: true
+      }
     }
   },
   image: {
@@ -92,17 +112,12 @@ export const BLOCK_REGISTRY: Record<BlockType, BlockConfig> = {
     icon: Image,
     component: ImageBlock,
     defaultData: {
-      title: 'Photo Gallery'
-    }
-  },
-  gemmi: {
-    type: 'gemmi',
-    label: 'Gemini Insight',
-    icon: Sparkles,
-    component: () => null, // Placeholder for now
-    defaultData: {
-      title: 'AI Suggestions',
-      content: 'AI insight will appear here'
+      title: 'Photo Gallery',
+      type: 'image',
+      content: {
+        images: [],
+        allowParticipantUploads: true
+      }
     }
   }
 };

@@ -4,7 +4,7 @@ import { Timestamp } from 'firebase/firestore';
 // BLOCK BASE TYPES
 // ========================================
 
-export type BlockType = 'time' | 'location' | 'task' | 'note' | 'budget' | 'image';
+export type BlockType = 'time' | 'location' | 'task' | 'note' | 'budget' | 'image' | 'poll' | 'rsvp';
 
 export interface BlockLayout {
   x: number; // Grid column position (0-11)
@@ -17,7 +17,15 @@ export interface Block {
   id: string;
   type: BlockType;
   title?: string;
-  content: TimeBlockContent | LocationBlockContent | TaskBlockContent | NoteBlockContent | BudgetBlockContent | ImageBlockContent;
+  content:
+    | TimeBlockContent
+    | LocationBlockContent
+    | TaskBlockContent
+    | NoteBlockContent
+    | BudgetBlockContent
+    | ImageBlockContent
+    | PollBlockContent
+    | RsvpBlockContent;
   order: number;
   author: string;
   layout: BlockLayout; // Position and size on canvas
@@ -188,4 +196,92 @@ export interface ImageItem {
 export interface ImageBlock extends Block {
   type: 'image';
   content: ImageBlockContent;
+}
+
+// ========================================
+// POLL BLOCK
+// ========================================
+
+export interface PollOption {
+  id: string;
+  text: string;
+  votes: number;
+  voters: string[]; // Array of voter names
+}
+
+export interface PollBlockContent {
+  title: string;
+  allowMultipleVotes: boolean;
+  options: PollOption[];
+  totalVotes: number;
+}
+
+export interface PollBlock extends Block {
+  type: 'poll';
+  content: PollBlockContent;
+}
+
+// ========================================
+// RSVP BLOCK
+// ========================================
+
+export interface RsvpResponse {
+  name: string;
+  response: 'going' | 'not-going' | 'maybe';
+  timestamp: Timestamp;
+}
+
+export interface RsvpBlockContent {
+  responses: RsvpResponse[];
+  allowMaybe: boolean;
+  deadline?: Timestamp;
+}
+
+export interface RsvpBlock extends Block {
+  type: 'rsvp';
+  content: RsvpBlockContent;
+}
+
+// ========================================
+// POLL BLOCK
+// ========================================
+
+export interface PollOption {
+  id: string;
+  text: string;
+  votes: number;
+  voters: string[]; // Array of voter names
+}
+
+export interface PollBlockContent {
+  title: string;
+  allowMultipleVotes: boolean;
+  options: PollOption[];
+  totalVotes: number;
+}
+
+export interface PollBlock extends Block {
+  type: 'poll';
+  content: PollBlockContent;
+}
+
+// ========================================
+// RSVP BLOCK
+// ========================================
+
+export interface RsvpResponse {
+  name: string;
+  response: 'going' | 'not-going' | 'maybe';
+  timestamp: Timestamp;
+}
+
+export interface RsvpBlockContent {
+  responses: RsvpResponse[];
+  allowMaybe: boolean;
+  deadline?: Timestamp;
+}
+
+export interface RsvpBlock extends Block {
+  type: 'rsvp';
+  content: RsvpBlockContent;
 }

@@ -4,7 +4,7 @@ import { Timestamp } from 'firebase/firestore';
 // BLOCK BASE TYPES
 // ========================================
 
-export type BlockType = 'time' | 'location' | 'task' | 'note' | 'budget' | 'rsvp';
+export type BlockType = 'time' | 'location' | 'task' | 'note' | 'budget' | 'rsvp' | 'album';
 
 export interface BlockLayout {
   x: number; // Grid column position (0-11)
@@ -17,7 +17,7 @@ export interface Block {
   id: string;
   type: BlockType;
   title?: string;
-  content: TimeBlockContent | LocationBlockContent | TaskBlockContent | NoteBlockContent | BudgetBlockContent | RSVPBlockContent;
+  content: TimeBlockContent | LocationBlockContent | TaskBlockContent | NoteBlockContent | BudgetBlockContent | RSVPBlockContent | AlbumBlockContent;
   order: number;
   author: string;
   layout: BlockLayout; // Position and size on canvas
@@ -179,4 +179,26 @@ export interface RSVPBlockContent {
 export interface RSVPBlock extends Block {
   type: 'rsvp';
   content: RSVPBlockContent;
+}
+
+// ========================================
+// ALBUM BLOCK (Shared Album)
+// ========================================
+
+export interface ImageItem {
+  id: string;
+  url: string;
+  title?: string;
+  uploadedBy?: string;
+  uploadedAt: string; // ISO
+}
+
+export interface AlbumBlockContent {
+  images: ImageItem[];
+  allowParticipantUploads: boolean;
+}
+
+export interface AlbumBlock extends Block {
+  type: 'album';
+  content: AlbumBlockContent;
 }

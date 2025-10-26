@@ -2,13 +2,14 @@ import { useCallback } from 'react';
 import GridLayout, { Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import { Timestamp } from 'firebase/firestore';
-import type { Block, TimeBlock, LocationBlock as LocationBlockType, BudgetBlock as BudgetBlockType, TaskBlock as TaskBlockType, NoteBlock as NoteBlockType, RSVPBlock as RSVPBlockType, BlockLayout } from '../types/block';
+import type { Block, TimeBlock, LocationBlock as LocationBlockType, BudgetBlock as BudgetBlockType, TaskBlock as TaskBlockType, NoteBlock as NoteBlockType, RSVPBlock as RSVPBlockType, AlbumBlock as AlbumBlockType, BlockLayout } from '../types/block';
 import AvailabilityHeatmap from './AvailabilityHeatmap';
 import LocationBlock from './LocationBlock';
 import BudgetBlock from './BudgetBlock';
 import TaskBlock from './TaskBlock';
 import NoteBlock from './NoteBlock';
 import RSVPBlock from './RSVPBlock';
+import SharedAlbumBlock from './SharedAlbumBlock';
 import FixedDateTimeDisplay from './FixedDateTimeDisplay';
 import { GripVertical, X } from 'lucide-react';
 
@@ -285,6 +286,29 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, eventI
             isOrganizer={isOrganizer}
             onRemoveParticipant={onRemoveParticipant}
             onAddParticipant={onAddParticipant}
+          />
+        </div>
+      );
+    }
+
+    // Render AlbumBlock
+    if (block.type === 'album') {
+      const ab = block as AlbumBlockType;
+      const currentUserName = participantNames.get(currentUserId || '') || currentUserId || 'Anonymous';
+
+      return (
+        <div className="h-full overflow-auto">
+          <SharedAlbumBlock
+            images={ab.content.images || []}
+            isOrganizer={isOrganizer}
+            allowParticipantUploads={ab.content.allowParticipantUploads ?? true}
+            currentUserName={currentUserName}
+            eventId={eventId}
+            onChange={(images, allowUploads) => {
+              onBlockUpdate?.(block.id, {
+                content: { images, allowParticipantUploads: allowUploads }
+              });
+            }}
           />
         </div>
       );

@@ -210,6 +210,14 @@ export function useBlockHandlers({
         order: blocks.length,
         author: authorId
       };
+    } else if (blockType === 'album') {
+      newBlock = {
+        type: 'album' as const,
+        content: { images: [], allowParticipantUploads: true },
+        layout: { x: 0, y: blocks.length * 2, w: 8, h: 5 },
+        order: blocks.length,
+        author: authorId
+      };
     } else {
       console.log('Unknown block type:', blockType);
       return;

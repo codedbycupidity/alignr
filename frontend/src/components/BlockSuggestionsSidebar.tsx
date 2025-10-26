@@ -1,4 +1,4 @@
-import { Sparkles, Loader2, Plus, Clock, MapPin, CheckSquare, FileText, BarChart3, Users, DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Sparkles, Loader2, Plus, Clock, MapPin, CheckSquare, FileText, BarChart3, Users, DollarSign, ChevronLeft, ChevronRight, Image } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { BlockSuggestion } from '../services/gemini';
@@ -9,6 +9,7 @@ const BLOCK_TYPES = [
   { type: 'location', label: 'Location', icon: MapPin, description: 'Venue suggestions' },
   { type: 'task', label: 'Task', icon: CheckSquare, description: 'To-do lists' },
   { type: 'note', label: 'Note', icon: FileText, description: 'General notes' },
+  { type: 'album', label: 'Shared Album', icon: Image, description: 'Upload & share photos' },
   { type: 'poll', label: 'Poll', icon: BarChart3, description: 'Quick decisions' },
   { type: 'rsvp', label: 'RSVP', icon: Users, description: 'Track attendance' },
   { type: 'budget', label: 'Budget', icon: DollarSign, description: 'Split expenses' },

@@ -264,6 +264,13 @@ export default function NoteBlock({
           <span className="text-sm font-medium">Add a comment</span>
         </button>
       )}
+
+      {/* Debug info - remove after testing */}
+      {!currentUserId && (
+        <div className="text-xs text-gray-400 text-center">
+          Join the event to add comments
+        </div>
+      )}
     </div>
   );
 }

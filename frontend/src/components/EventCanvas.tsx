@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import GridLayout, { Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import { Timestamp } from 'firebase/firestore';
@@ -55,9 +55,16 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, eventI
     static: !isOrganizer // Only organizer can move blocks
   }));
 
+  // Track dragging state to optimize updates
+  const [isDragging, setIsDragging] = useState(false);
+  const layoutUpdateTimeout = useRef<NodeJS.Timeout | null>(null);
+  const pendingUpdates = useRef<Map<string, BlockLayout>>(new Map());
+
+  // Debounced layout change handler
   const handleLayoutChange = useCallback((newLayout: Layout[]) => {
     if (!isOrganizer || !onLayoutChange) return;
 
+    // Collect all changes
     newLayout.forEach(item => {
       const block = blocks.find(b => b.id === item.i);
       if (block) {
@@ -68,7 +75,7 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, eventI
           block.layout.h !== item.h;
 
         if (hasChanged) {
-          onLayoutChange(item.i, {
+          pendingUpdates.current.set(item.i, {
             x: item.x,
             y: item.y,
             w: item.w,
@@ -77,7 +84,29 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, eventI
         }
       }
     });
+
+    // Clear existing timeout
+    if (layoutUpdateTimeout.current) {
+      clearTimeout(layoutUpdateTimeout.current);
+    }
+
+    // Debounce: only save after user stops dragging for 500ms
+    layoutUpdateTimeout.current = setTimeout(() => {
+      pendingUpdates.current.forEach((layout, blockId) => {
+        onLayoutChange(blockId, layout);
+      });
+      pendingUpdates.current.clear();
+    }, 500);
   }, [blocks, isOrganizer, onLayoutChange]);
+
+  // Handle drag start/stop for visual feedback
+  const handleDragStart = useCallback(() => {
+    setIsDragging(true);
+  }, []);
+
+  const handleDragStop = useCallback(() => {
+    setIsDragging(false);
+  }, []);
 
   const renderBlock = (block: Block) => {
     // Render TimeBlock
@@ -357,6 +386,10 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, eventI
         rowHeight={100}
         width={1000}
         onLayoutChange={handleLayoutChange}
+        onDragStart={handleDragStart}
+        onDragStop={handleDragStop}
+        onResizeStart={handleDragStart}
+        onResizeStop={handleDragStop}
         isDraggable={isOrganizer}
         isResizable={isOrganizer}
         compactType={null}
@@ -364,6 +397,9 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, eventI
         margin={[16, 16]}
         containerPadding={[0, 0]}
         draggableHandle=".drag-handle"
+        useCSSTransforms={true}
+        transformScale={1}
+        allowOverlap={true}
       >
         {blocks.map(block => (
           <div

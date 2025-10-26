@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { updateEvent, getEvent, deleteBlock, getBlocks, addBlock } from '../services/events';
+import { updateEvent, getEvent, deleteBlock, addBlock } from '../services/events';
 import type { TimeBlockContent, TimeBlock } from '../types/block';
 import EventCanvas from '../components/EventCanvas';
 import AddTimeBlockModal from '../components/AddTimeBlockModal';

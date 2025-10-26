@@ -3,12 +3,13 @@ import type { ParticipantAvailability } from '../types/availability';
 
 interface AvailabilityHeatmapProps {
   availability: ParticipantAvailability[];
-  dates: string[];
+  dates: string[] | number[];
   startTime: string;
   endTime: string;
   intervalMinutes?: number;
   isOrganizer?: boolean;
   onSelectTimeSlot?: (date: string, startTime: string, endTime: string) => void;
+  dateType?: 'specific' | 'days';
 }
 
 export default function AvailabilityHeatmap({
@@ -18,8 +19,19 @@ export default function AvailabilityHeatmap({
   endTime,
   intervalMinutes = 30,
   isOrganizer = false,
-  onSelectTimeSlot
+  onSelectTimeSlot,
+  dateType = 'specific'
 }: AvailabilityHeatmapProps) {
+  // Convert days of week to day names
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  // Compute the date list based on dateType
+  const dateList = useMemo(() => {
+    return dateType === 'days'
+      ? (dates as number[]).map(day => dayNames[day])
+      : dates as string[];
+  }, [dates, dateType]);
+
   // Generate all time slots
   const timeSlots = useMemo(() => {
     const slots: { startTime: string; endTime: string }[] = [];
@@ -91,7 +103,7 @@ export default function AvailabilityHeatmap({
     );
   }
 
-  const containerWidth = 80 + (dates.length * 40) + 24; // time column + (dates × date width) + padding
+  const containerWidth = 80 + (dateList.length * 40) + 24; // time column + (dates × date width) + padding
 
   return (
     <div className="bg-white rounded-lg border border-gray-200/50 shadow-sm p-3 inline-block" style={{ width: `${containerWidth}px` }}>
@@ -106,9 +118,20 @@ export default function AvailabilityHeatmap({
       <div>
         <div>
           {/* Header row with dates */}
-          <div className="grid mb-1" style={{ gridTemplateColumns: `80px repeat(${dates.length}, 40px)` }}>
+          <div className="grid mb-1" style={{ gridTemplateColumns: `80px repeat(${dateList.length}, 40px)` }}>
             <div className="h-10"></div>
-            {dates.map((date, i) => {
+            {dateList.map((date, i) => {
+              // For days mode, date is already a day name like "Monday"
+              if (dateType === 'days') {
+                return (
+                  <div key={i} className="h-10 flex flex-col items-center justify-center gap-0.5">
+                    <span className="text-[10px] font-bold text-gray-700 leading-none">
+                      {date.slice(0, 3)}
+                    </span>
+                  </div>
+                );
+              }
+              // For specific dates, format as usual
               const dateObj = new Date(date + 'T00:00:00');
               return (
                 <div key={i} className="h-10 flex flex-col items-center justify-center gap-0.5">
@@ -128,7 +151,7 @@ export default function AvailabilityHeatmap({
 
           {/* Time slot rows */}
           {timeSlots.map((slot, timeIndex) => (
-            <div key={timeIndex} className="grid" style={{ gridTemplateColumns: `80px repeat(${dates.length}, 40px)` }}>
+            <div key={timeIndex} className="grid" style={{ gridTemplateColumns: `80px repeat(${dateList.length}, 40px)` }}>
               {/* Time label */}
               <div className="h-6 flex items-center pr-2">
                 <span className="text-xs text-gray-700 font-medium">
@@ -137,7 +160,7 @@ export default function AvailabilityHeatmap({
               </div>
 
               {/* Availability cells */}
-              {dates.map((date, dateIndex) => {
+              {dateList.map((date, dateIndex) => {
                 const availableNames = getAvailableParticipants(date, slot.startTime);
                 const count = availableNames.length;
                 const colorClass = getHeatmapColor(count);
@@ -145,15 +168,18 @@ export default function AvailabilityHeatmap({
                   ? `Available (${count}/${availability.length}):\n${availableNames.join(', ')}`
                   : 'No one available';
 
+                // Allow organizer to click to set event time
+                const canSetEventTime = isOrganizer && onSelectTimeSlot;
+
                 return (
                   <div
                     key={dateIndex}
                     className={`h-6 border border-gray-200 flex items-center justify-center ${
-                      isOrganizer ? 'cursor-pointer hover:ring-2 hover:ring-[#75619D]' : 'cursor-default hover:ring-1 hover:ring-[#7B61FF]'
+                      canSetEventTime ? 'cursor-pointer hover:ring-2 hover:ring-[#75619D]' : 'cursor-default hover:ring-1 hover:ring-[#7B61FF]'
                     } transition-all relative group ${colorClass}`}
                     title={tooltipText}
                     onClick={() => {
-                      if (isOrganizer && onSelectTimeSlot) {
+                      if (canSetEventTime) {
                         onSelectTimeSlot(date, slot.startTime, slot.endTime);
                       }
                     }}
@@ -169,12 +195,12 @@ export default function AvailabilityHeatmap({
                         <div>
                           <div className="font-semibold mb-0.5">Available ({count}/{availability.length}):</div>
                           <div>{availableNames.join(', ')}</div>
-                          {isOrganizer && <div className="mt-1 text-[9px] text-gray-300 italic">Click to set as event time</div>}
+                          {canSetEventTime && <div className="mt-1 text-[9px] text-gray-300 italic">Click to set as event time</div>}
                         </div>
                       ) : (
                         <div>
                           <div>No one available</div>
-                          {isOrganizer && <div className="mt-1 text-[9px] text-gray-300 italic">Click to set as event time</div>}
+                          {canSetEventTime && <div className="mt-1 text-[9px] text-gray-300 italic">Click to set as event time</div>}
                         </div>
                       )}
                       {/* Arrow */}

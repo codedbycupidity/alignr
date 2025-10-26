@@ -2,12 +2,13 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import type { TimeSlot } from '../types/availability';
 
 interface AvailabilityGridProps {
-  dates: string[]; // YYYY-MM-DD format
+  dates: string[] | number[]; // YYYY-MM-DD format for specific dates, or 0-6 for days of week
   startTime: string; // HH:MM
   endTime: string; // HH:MM
   intervalMinutes?: number;
   initialAvailability?: TimeSlot[]; // Pre-populate with existing availability
   onAvailabilityChange: (timeSlots: TimeSlot[]) => void;
+  dateType?: 'specific' | 'days';
 }
 
 export default function AvailabilityGrid({
@@ -16,7 +17,8 @@ export default function AvailabilityGrid({
   endTime,
   intervalMinutes = 30,
   initialAvailability,
-  onAvailabilityChange
+  onAvailabilityChange,
+  dateType = 'specific'
 }: AvailabilityGridProps) {
   const [slots, setSlots] = useState<TimeSlot[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -24,11 +26,21 @@ export default function AvailabilityGrid({
   const gridRef = useRef<HTMLDivElement>(null);
   const initialAppliedRef = useRef(false);
 
+  // Convert days of week to day names for display
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  // Compute the date list based on dateType
+  const dateList = useMemo(() => {
+    return dateType === 'days'
+      ? (dates as number[]).map(day => dayNames[day])
+      : dates as string[];
+  }, [dates, dateType]);
+
   // Generate empty time slots
   useEffect(() => {
     const newSlots: TimeSlot[] = [];
 
-    for (const date of dates) {
+    for (const date of dateList) {
       const [startHour, startMin] = startTime.split(':').map(Number);
       const [endHour, endMin] = endTime.split(':').map(Number);
 
@@ -56,7 +68,7 @@ export default function AvailabilityGrid({
 
     setSlots(newSlots);
     initialAppliedRef.current = false; // Reset when grid structure changes
-  }, [dates, startTime, endTime, intervalMinutes]);
+  }, [dateList, startTime, endTime, intervalMinutes]);
 
   // Apply initial availability once when component mounts
   useEffect(() => {
@@ -112,16 +124,21 @@ export default function AvailabilityGrid({
   // Get unique time slots (from first date)
   const uniqueTimeSlots = useMemo(() => {
     const timeSlots: { startTime: string; endTime: string }[] = [];
-    if (dates.length > 0 && slots.length > 0) {
-      const firstDateSlots = slots.filter(s => s.date === dates[0]);
+    if (dateList.length > 0 && slots.length > 0) {
+      const firstDateSlots = slots.filter(s => s.date === dateList[0]);
       firstDateSlots.forEach(slot => {
         timeSlots.push({ startTime: slot.startTime, endTime: slot.endTime });
       });
     }
     return timeSlots;
-  }, [dates, slots]);
+  }, [dateList, slots]);
 
   const formatDate = (dateStr: string) => {
+    // For days mode, dateStr is already a day name like "Monday"
+    if (dateType === 'days') {
+      return dateStr;
+    }
+    // For specific dates, format as "Mon, Jan 1"
     const date = new Date(dateStr + 'T00:00:00');
     return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   };
@@ -145,11 +162,11 @@ export default function AvailabilityGrid({
         style={{ userSelect: 'none' }}
       >
         {/* Header */}
-        <div className="grid" style={{ gridTemplateColumns: `80px repeat(${dates.length}, minmax(60px, 1fr))` }}>
+        <div className="grid" style={{ gridTemplateColumns: `80px repeat(${dateList.length}, minmax(60px, 1fr))` }}>
           <div className="bg-gray-50 border-r border-b border-gray-200 px-2 py-1 font-semibold text-xs text-gray-700 sticky left-0 z-10">
             Time
           </div>
-          {dates.map(date => (
+          {dateList.map(date => (
             <div
               key={date}
               className="bg-gray-50 border-r border-b border-gray-200 px-1 py-1 font-semibold text-xs text-gray-700 text-center"
@@ -164,12 +181,12 @@ export default function AvailabilityGrid({
           <div
             key={timeIndex}
             className="grid"
-            style={{ gridTemplateColumns: `80px repeat(${dates.length}, minmax(60px, 1fr))` }}
+            style={{ gridTemplateColumns: `80px repeat(${dateList.length}, minmax(60px, 1fr))` }}
           >
             <div className="bg-gray-50 border-r border-b border-gray-200 px-2 py-1 text-xs text-gray-600 sticky left-0 z-10">
               {formatTime(timeSlot.startTime)}
             </div>
-            {dates.map((date) => {
+            {dateList.map((date) => {
               const slotIndex = slots.findIndex(
                 s => s.date === date && s.startTime === timeSlot.startTime
               );

@@ -211,52 +211,64 @@ export default function EditableEventHeader({
                   </div>
                 </div>
               ) : (
-                <div className="flex items-start gap-2 group">
-                  {eventDescription ? (
-                    <>
-                      <p
-                        onClick={isOrganizer ? () => setEditingDescription(true) : undefined}
-                        className={`text-sm text-gray-600 flex-1 ${
-                          isOrganizer ? 'cursor-pointer hover:text-gray-800 transition-colors' : ''
-                        }`}
-                      >
-                        {eventDescription}
-                      </p>
-                      {isOrganizer && (
-                        <button
-                          onClick={() => setEditingDescription(true)}
-                          className="p-1 opacity-0 group-hover:opacity-100 hover:bg-gray-100 rounded transition-all"
-                          title="Edit description"
+                <div className="space-y-1">
+                  <div className="flex items-start gap-2 group">
+                    {eventDescription ? (
+                      <>
+                        <p
+                          onClick={isOrganizer ? () => setEditingDescription(true) : undefined}
+                          className={`text-sm text-gray-600 flex-1 ${
+                            isOrganizer ? 'cursor-pointer hover:text-gray-800 transition-colors' : ''
+                          }`}
                         >
-                          <Edit2 className="w-3.5 h-3.5 text-gray-500" />
-                        </button>
-                      )}
-                    </>
-                  ) : (
-                    <div className="flex-1 flex items-center gap-2">
-                      {isOrganizer ? (
-                        <>
-                          <p
+                          {eventDescription}
+                        </p>
+                        {isOrganizer && (
+                          <button
                             onClick={() => setEditingDescription(true)}
-                            className="text-sm text-gray-400 italic cursor-pointer hover:text-gray-600 transition-colors"
+                            className="p-1 opacity-0 group-hover:opacity-100 hover:bg-gray-100 rounded transition-all"
+                            title="Edit description"
                           >
-                            Add a description...
-                          </p>
-                          {!aiSuggestion && (
-                            <button
-                              onClick={handleGenerateDescription}
-                              disabled={generatingDescription}
-                              className="flex items-center gap-1 px-2 py-1 text-xs bg-purple-50 text-[#75619D] rounded hover:bg-purple-100 transition-colors disabled:opacity-50"
-                              title="Click to generate AI description"
+                            <Edit2 className="w-3.5 h-3.5 text-gray-500" />
+                          </button>
+                        )}
+                      </>
+                    ) : (
+                      <div className="flex-1 flex items-center gap-2">
+                        {isOrganizer ? (
+                          <>
+                            <p
+                              onClick={() => setEditingDescription(true)}
+                              className="text-sm text-gray-400 italic cursor-pointer hover:text-gray-600 transition-colors"
                             >
-                              <Sparkles className="w-3 h-3" />
-                              {generatingDescription ? 'Generating...' : 'AI Suggest'}
-                            </button>
-                          )}
-                        </>
-                      ) : (
-                        <p className="text-sm text-gray-400 italic">No description</p>
-                      )}
+                              Add a description...
+                            </p>
+                            {!aiSuggestion && (
+                              <button
+                                onClick={handleGenerateDescription}
+                                disabled={generatingDescription}
+                                className="flex items-center gap-1 px-2 py-1 text-xs bg-purple-50 text-[#75619D] rounded hover:bg-purple-100 transition-colors disabled:opacity-50"
+                                title="Click to generate AI description"
+                              >
+                                <Sparkles className="w-3 h-3" />
+                                {generatingDescription ? 'Generating...' : 'AI Suggest'}
+                              </button>
+                            )}
+                          </>
+                        ) : (
+                          <p className="text-sm text-gray-400 italic">No description</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Participant Count below description */}
+                  {participantCount > 0 && (
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                      <Users className="w-3.5 h-3.5" />
+                      <span>
+                        {participantCount} {participantCount === 1 ? 'participant' : 'participants'}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -302,14 +314,25 @@ export default function EditableEventHeader({
         )}
 
         {/* Availability Mode */}
-        {timeBlock && (
-          <>
-            <Calendar className="w-4 h-4 text-[#75619D]" />
-            <span>
-              {timeBlock.content.selectedDates?.length || 0} {timeBlock.content.selectedDates?.length === 1 ? 'date' : 'dates'} selected
-            </span>
-          </>
-        )}
+        {timeBlock && (() => {
+          const dateType = timeBlock.content.dateType || 'specific';
+          const count = dateType === 'specific'
+            ? (timeBlock.content.selectedDates?.length || 0)
+            : (timeBlock.content.selectedDays?.length || 0);
+          const label = dateType === 'specific' ? 'date' : 'day';
+
+          // Only show if count > 0
+          if (count === 0) return null;
+
+          return (
+            <>
+              <Calendar className="w-4 h-4 text-[#75619D]" />
+              <span>
+                {count} {count === 1 ? label : `${label}s`} selected
+              </span>
+            </>
+          );
+        })()}
 
         {/* Participant Count - Show for both modes */}
         {(timeBlock || fixedTimeBlock) && participantCount > 0 && (

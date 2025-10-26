@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Calendar as CalendarIcon, Clock, Globe, Loader2 } from 'lucide-react';
 import { DayPicker } from 'react-day-picker';
 import type { TimeBlockContent } from '../types/block';
@@ -9,6 +9,7 @@ interface AddTimeBlockModalProps {
   onConfirm: (config: TimeBlockContent) => Promise<void>;
   eventName: string;
   isDragging?: boolean;
+  initialConfig?: TimeBlockContent | null;
 }
 
 const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -25,7 +26,10 @@ const TIMEZONES = [
   'Australia/Sydney'
 ];
 
-export default function AddTimeBlockModal({ isOpen, onClose, onConfirm, eventName, isDragging = false }: AddTimeBlockModalProps) {
+export default function AddTimeBlockModal({ isOpen, onClose, onConfirm, eventName, isDragging = false, initialConfig = null }: AddTimeBlockModalProps) {
+  // If initialConfig is provided, prefill form for editing
+  // we'll hydrate form fields from initialConfig when it changes
+  
   const [mode, setMode] = useState<'availability' | 'fixed'>('availability');
   const [dateType, setDateType] = useState<'specific' | 'days'>('specific');
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
@@ -43,6 +47,28 @@ export default function AddTimeBlockModal({ isOpen, onClose, onConfirm, eventNam
   const [fixedDate, setFixedDate] = useState<Date>(new Date());
   const [fixedStartTime, setFixedStartTime] = useState('09:00');
   const [fixedEndTime, setFixedEndTime] = useState('17:00');
+
+  // Populate state from initialConfig when editing an existing block
+  useEffect(() => {
+    if (!initialConfig) return;
+    // mode
+    if (initialConfig.mode === 'fixed') {
+      setMode('fixed');
+      if (initialConfig.fixedDate) setFixedDate(new Date(initialConfig.fixedDate + 'T00:00:00'));
+      if (initialConfig.fixedStartTime) setFixedStartTime(initialConfig.fixedStartTime);
+      if (initialConfig.fixedEndTime) setFixedEndTime(initialConfig.fixedEndTime);
+      if (initialConfig.fixedTimezone) setTimezone(initialConfig.fixedTimezone);
+    } else {
+      setMode('availability');
+      if (initialConfig.dateType) setDateType(initialConfig.dateType);
+      if (initialConfig.selectedDates) setSelectedDates((initialConfig.selectedDates || []).map(d => new Date(d + 'T00:00:00')));
+      if (initialConfig.selectedDays) setSelectedDays(initialConfig.selectedDays || []);
+      if (initialConfig.startTime) setStartTime(initialConfig.startTime);
+      if (initialConfig.endTime) setEndTime(initialConfig.endTime);
+      if (initialConfig.timezone) setTimezone(initialConfig.timezone);
+      if (initialConfig.intervalMinutes) setIntervalMinutes(initialConfig.intervalMinutes || 30);
+    }
+  }, [initialConfig]);
 
   const generateTimeOptions = () => {
     const times = [];

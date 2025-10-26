@@ -1,9 +1,11 @@
 import { getBlockConfig } from './BlockRegistry';
 import type { BlockType } from './BlockRegistry';
+import EditableBlockTitle from './EditableBlockTitle';
 
 export interface Block {
   id: number;
   type: BlockType;
+  title?: string;
   x: number;
   y: number;
   content?: string;
@@ -26,6 +28,10 @@ export default function BlockRenderer({ block, onUpdate, isOrganizer }: BlockRen
   if (!BlockComponent) {
     return <div className="p-4 bg-gray-100 rounded">Block type not supported</div>;
   }
+
+  const handleTitleChange = (title: string) => {
+    onUpdate(block.id, { ...block, title });
+  };
 
   // Pass the appropriate props based on block type
   const props: any = {
@@ -69,5 +75,23 @@ export default function BlockRenderer({ block, onUpdate, isOrganizer }: BlockRen
       break;
   }
 
-  return <BlockComponent {...props} />;
+  return (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden cursor-move">
+      {/* Header with title */}
+      <div className="px-4 py-2 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+        <EditableBlockTitle
+          title={block.title || config.label}
+          isEditable={isOrganizer || block.editableByAll}
+          onTitleChange={handleTitleChange}
+          className="text-sm font-medium text-gray-700"
+        />
+        {/* You can add additional header controls here */}
+      </div>
+      
+      {/* Block content */}
+      <div className="p-4">
+        <BlockComponent {...props} />
+      </div>
+    </div>
+  );
 }

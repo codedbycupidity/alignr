@@ -20,6 +20,7 @@ export type BlockType = 'note' | 'checklist' | 'poll' | 'rsvp' | 'gemmi' | 'imag
 export interface Block {
   id: number;
   type: BlockType;
+  title?: string;
   x: number;
   y: number;
   content?: string;
@@ -35,6 +36,7 @@ export interface BlockConfig {
   icon: LucideIcon;
   component: React.ComponentType<any>;
   defaultData: {
+    title?: string;
     content?: string;
     items?: string[];
     options?: { text: string; votes: number; voters: string[] }[];
@@ -50,6 +52,7 @@ export const BLOCK_REGISTRY: Record<BlockType, BlockConfig> = {
     icon: MessageSquare,
     component: NoteBlock,
     defaultData: {
+      title: 'Notes',
       content: 'New note...'
     }
   },
@@ -59,6 +62,7 @@ export const BLOCK_REGISTRY: Record<BlockType, BlockConfig> = {
     icon: Check,
     component: ChecklistBlock,
     defaultData: {
+      title: 'Tasks',
       items: ['New task']
     }
   },
@@ -68,6 +72,7 @@ export const BLOCK_REGISTRY: Record<BlockType, BlockConfig> = {
     icon: BarChart3,
     component: VotingBlock,
     defaultData: {
+      title: 'Find the best time',
       options: [{ text: 'Option 1', votes: 0, voters: [] }]
     }
   },
@@ -77,6 +82,7 @@ export const BLOCK_REGISTRY: Record<BlockType, BlockConfig> = {
     icon: Users,
     component: RsvpBlock,
     defaultData: {
+      title: 'Attendees',
       people: []
     }
   },
@@ -85,7 +91,9 @@ export const BLOCK_REGISTRY: Record<BlockType, BlockConfig> = {
     label: 'Images',
     icon: Image,
     component: ImageBlock,
-    defaultData: {}
+    defaultData: {
+      title: 'Photo Gallery'
+    }
   },
   gemmi: {
     type: 'gemmi',
@@ -93,6 +101,7 @@ export const BLOCK_REGISTRY: Record<BlockType, BlockConfig> = {
     icon: Sparkles,
     component: () => null, // Placeholder for now
     defaultData: {
+      title: 'AI Suggestions',
       content: 'AI insight will appear here'
     }
   }
@@ -111,12 +120,14 @@ export const getBlockConfig = (type: BlockType): BlockConfig => {
 // Helper to create new block
 export const createBlock = (type: BlockType, editableByAll: boolean = false) => {
   const config = getBlockConfig(type);
+  const { defaultData } = config;
   return {
     id: Date.now(),
     type,
     x: 150,
     y: 150,
-    ...config.defaultData,
+    title: defaultData.title || config.label,
+    ...defaultData,
     editableByAll
   };
 };

@@ -1,31 +1,48 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { X, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
-
-type ImageItem = {
-  id: string;
-  url: string;
-  title?: string;
-  uploadedBy?: string;
-  uploadedAt: string; // ISO
-};
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { storage } from '../config/firebase';
+import { ImageItem } from '../types/block';
+import { Timestamp } from 'firebase/firestore';
 
 type Props = {
+  blockId: string;
   initialImages?: ImageItem[];
   isOrganizer?: boolean;
+  allowParticipantUploads?: boolean;
   onChange?: (images: ImageItem[]) => void;
+  onAllowUploadsChange?: (allow: boolean) => void;
+  currentUserId: string;
+  currentUserName: string;
 };
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
-function formatDate(iso?: string) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  return d.toLocaleString();
+function formatDate(timestamp?: Timestamp | string) {
+  if (!timestamp) return '';
+  
+  if (timestamp instanceof Timestamp) {
+    return timestamp.toDate().toLocaleString();
+  }
+
+  // If it's a string (ISO date) or already a Date object
+  const date = new Date(timestamp);
+  if (isNaN(date.getTime())) return '';
+  return date.toLocaleString();
 }
 
-const ImageBlock: React.FC<Props> = ({ initialImages = [], isOrganizer = false, onChange }) => {
+const ImageBlock: React.FC<Props> = ({
+  blockId,
+  initialImages = [],
+  isOrganizer = false,
+  allowParticipantUploads = true,
+  onChange,
+  onAllowUploadsChange,
+  currentUserId,
+  currentUserName,
+}) => {
   const [images, setImages] = useState<ImageItem[]>(initialImages);
-  const [allowUploads, setAllowUploads] = useState<boolean>(true);
+  const [allowUploads, setAllowUploads] = useState<boolean>(allowParticipantUploads);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -72,17 +89,25 @@ const ImageBlock: React.FC<Props> = ({ initialImages = [], isOrganizer = false, 
     setUploading(true);
 
     try {
-      // Simulate upload - in a real app replace with API upload and get back URLs
       const uploaded: ImageItem[] = await Promise.all(
-        valid.map(async (f) => {
-          const dataUrl = await fileToDataUrl(f);
+        valid.map(async (file) => {
+          // Create a reference to the file in Firebase Storage
+          const storageRef = ref(storage, `events/${blockId}/images/${Date.now()}_${file.name}`);
+          
+          // Upload the file
+          await uploadBytes(storageRef, file);
+          
+          // Get the download URL
+          const url = await getDownloadURL(storageRef);
+          
           return {
             id: Math.random().toString(36).slice(2, 9),
-            url: dataUrl,
-            title: f.name,
-            uploadedBy: isOrganizer ? 'Organizer' : 'Participant',
-            uploadedAt: new Date().toISOString(),
-          } as ImageItem;
+            url,
+            storageRef: storageRef.fullPath,
+            title: file.name,
+            uploadedBy: currentUserName,
+            uploadedAt: Timestamp.now(),
+          };
         }),
       );
 
@@ -92,19 +117,11 @@ const ImageBlock: React.FC<Props> = ({ initialImages = [], isOrganizer = false, 
         return next;
       });
     } catch (err) {
+      console.error('Upload error:', err);
       setError('Upload failed');
     } finally {
       setUploading(false);
     }
-  };
-
-  const fileToDataUrl = (file: File) => {
-    return new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
   };
 
   const onUploadClick = () => fileInputRef.current?.click();
@@ -151,7 +168,7 @@ const ImageBlock: React.FC<Props> = ({ initialImages = [], isOrganizer = false, 
       )}
 
       {/* Conditional upload section */}
-      {(allowUploads || isOrganizer) && (
+      {(isOrganizer || (allowParticipantUploads && !isOrganizer)) && (
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <div className="flex items-center space-x-3">
             <button

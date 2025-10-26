@@ -1,5 +1,5 @@
+import React, { useState } from 'react';
 import { Sparkles, Loader2, Plus, Clock, MapPin, CheckSquare, FileText, BarChart3, Users, DollarSign, ChevronLeft, Image } from 'lucide-react';
-import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { BlockSuggestion } from '../services/gemini';
 import type { Block } from '../types/block';
@@ -50,43 +50,85 @@ export default function BlockSuggestionsSidebar({
   };
 
   return (
-    <aside className={`bg-white shadow-md border-r border-gray-200 overflow-y-auto transition-all duration-300 ${
-      isOpen ? 'w-80 px-6 py-8' : 'w-20 px-0 py-8'
-    }`}>
-      {/* Toggle Button */}
-      {/* Toggle - always visible */}
-      <div className="absolute top-4 -right-5">
-        <button
-          onClick={onToggleSidebar}
-          className="p-2 bg-white border border-gray-200 rounded-full shadow-sm hover:bg-gray-50 transition-colors"
-          title={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-        >
-          <ChevronLeft className={`w-5 h-5 text-gray-600 transition-transform duration-300 ${!isOpen ? 'rotate-180' : ''}`} />
-        </button>
-      </div>
+    <>
+      {/* Floating Toggle Button - Always visible */}
+      <button
+        onClick={onToggleSidebar}
+        className={`fixed left-${isOpen ? '[320px]' : '0'} top-1/2 -translate-y-1/2 z-50 w-8 h-16 bg-[#75619D] hover:bg-[#624F8A] text-white rounded-r-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center`}
+        style={{ left: isOpen ? '320px' : '0' }}
+        title={isOpen ? 'Hide Blocks' : 'Show Blocks'}
+      >
+        <ChevronLeft 
+          className={`w-5 h-5 transition-transform duration-300 ${
+            isOpen ? '' : 'rotate-180'
+          }`} 
+        />
+      </button>
 
-      {isOpen && (
-        <>
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-2">
+      <aside className={`relative bg-white shadow-lg border-r border-gray-200 overflow-hidden transition-all duration-300 ${
+        isOpen ? 'w-80' : 'w-0'
+      }`}>
+          {isOpen && (
+            <div className="h-full overflow-y-auto px-6 py-8">
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-2">
               <Sparkles className="w-5 h-5 text-[#75619D]" />
               <h2 className="text-lg font-bold text-gray-900">Add Blocks</h2>
             </div>
-            <p className="text-xs text-gray-500">
-              Build your event with scheduling, polls, RSVPs, and more
-            </p>
-          </div>
+                  <p className="text-xs text-gray-500">
+                    Build your event with scheduling, polls, RSVPs, and more
+                  </p>
+                </div>
 
-          {loadingSuggestions ? (
-            <div className="flex flex-col items-center justify-center py-8">
-              <Loader2 className="w-8 h-8 text-[#75619D] animate-spin mb-3" />
-              <p className="text-sm text-gray-600">AI is analyzing...</p>
-            </div>
-          ) : (
-            <>
-              {/* Block Type Menu */}
-              <div className="mb-6">
-                <button
+                    {loadingSuggestions ? (
+                  <div className="flex flex-col items-center justify-center py-8">
+                    <Loader2 className="w-8 h-8 text-[#75619D] animate-spin mb-3" />
+                    <p className="text-sm text-gray-600">AI is analyzing...</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* AI Suggestions */}
+                    {suggestions.length > 0 && (
+                      <div className="mb-6">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Sparkles className="w-4 h-4 text-[#75619D]" />
+                          <p className="text-xs font-medium text-gray-700 uppercase tracking-wide">
+                            AI Suggestions
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          {suggestions.map((suggestion, index) => (
+                            <div
+                              key={index}
+                              draggable
+                              onDragStart={(e) => onDragStart(e, suggestion)}
+                              onDrag={onDrag}
+                              onDragEnd={onDragEnd}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                onSuggestionClick(suggestion);
+                              }}
+                              className="w-full p-3 bg-gray-50 hover:bg-[#75619D]/5 border border-gray-200 hover:border-[#75619D] rounded-lg text-left transition-all group cursor-grab active:cursor-grabbing"
+                            >
+                              <div className="flex items-start justify-between mb-1">
+                                <h5 className="text-sm font-semibold text-gray-900 group-hover:text-[#75619D] transition-colors">
+                                  {suggestion.title}
+                                </h5>
+                                <span className="text-[10px] px-2 py-0.5 bg-white border border-gray-200 text-gray-600 rounded-full">
+                                  {suggestion.blockType}
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-600">{suggestion.reason}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Block Type Menu */}
+                    <div className="mb-6">
+                      <button
                   onClick={() => setShowBlockMenu(!showBlockMenu)}
                   className="w-full p-4 bg-[#75619D] hover:bg-[#624F8A] text-white rounded-lg transition-all flex items-center justify-center gap-2 font-medium"
                 >
@@ -94,106 +136,77 @@ export default function BlockSuggestionsSidebar({
                   Add a Block
                 </button>
 
-                <AnimatePresence>
-                  {showBlockMenu && (
-                    <motion.div
+                      <AnimatePresence>
+                        {showBlockMenu && (
+                          <motion.div
                       initial={{ opacity: 0, height: 0, marginTop: 0 }}
                       animate={{ opacity: 1, height: 'auto', marginTop: 8 }}
                       exit={{ opacity: 0, height: 0, marginTop: 0 }}
                       transition={{ duration: 0.2, ease: 'easeOut' }}
                       className="overflow-hidden"
                     >
-                      <div className="space-y-1 bg-white border border-gray-200 rounded-lg p-2 shadow-lg">
-                        {BLOCK_TYPES.map((blockType, index) => {
-                          const Icon = blockType.icon;
-                          const isDisabled = (blockType.type === 'time' || blockType.type === 'location') && hasBlockType(blockType.type);
-                          return (
-                            <motion.button
+                          <div className="space-y-1 bg-white border border-gray-200 rounded-lg p-2 shadow-lg">
+                            {BLOCK_TYPES.map((blockType, index) => {
+                              const Icon = blockType.icon;
+                              const isDisabled = (blockType.type === 'time' || blockType.type === 'location') && hasBlockType(blockType.type);
+                              return (
+                                <motion.button
                               key={blockType.type}
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: index * 0.03, duration: 0.2 }}
-                              onClick={() => {
-                                if (!isDisabled) {
-                                  onAddBlock(blockType.type);
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: index * 0.03, duration: 0.2 }}
+                                onClick={() => {
+                                  if (!isDisabled) {
+                                    onAddBlock(blockType.type);
+                                    setShowBlockMenu(false);
+                                  }
+                                }}
+                                draggable={!isDisabled}
+                                onDragStart={((e: any) => {
+                                  if (isDisabled) return;
+                                  const suggestion = { title: blockType.label, reason: blockType.description, blockType: blockType.type } as any;
+                                  try { onDragStart(e, suggestion); } catch {}
                                   setShowBlockMenu(false);
-                                }
-                              }}
-                              draggable={!isDisabled}
-                              onMouseDown={(e: React.MouseEvent) => {
-                                if (isDisabled) return;
-                                const suggestion = { title: blockType.label, reason: blockType.description, blockType: blockType.type } as any;
-                                try { (onDragStart as any)(e as any, suggestion); } catch {}
-                                setShowBlockMenu(false);
-                              }}
-                              disabled={isDisabled}
-                              className={`w-full p-3 text-left rounded-md transition-colors group ${
-                                isDisabled
-                                  ? 'opacity-50 cursor-not-allowed'
-                                  : 'hover:bg-gray-50'
-                              }`}
-                            >
-                              <div className="flex items-start gap-3">
-                                <Icon className={`w-5 h-5 flex-shrink-0 mt-0.5 ${isDisabled ? 'text-gray-400' : 'text-[#75619D]'}`} />
-                                <div>
-                                  <div className={`font-medium text-sm ${
-                                    isDisabled
-                                      ? 'text-gray-400'
-                                      : 'text-gray-900 group-hover:text-[#75619D]'
-                                  }`}>
-                                    {blockType.label}
-                                    {isDisabled && <span className="ml-2 text-xs">(Added)</span>}
+                                }) as any}
+                                onDrag={((e: any) => {
+                                  try { onDrag(e); } catch {}
+                                }) as any}
+                                onDragEnd={((e: any) => {
+                                  try { onDragEnd(e); } catch {}
+                                }) as any}
+                                className={`w-full p-3 text-left rounded-md transition-colors group ${
+                                  isDisabled
+                                    ? 'opacity-50 cursor-not-allowed pointer-events-none'
+                                    : 'hover:bg-gray-50'
+                                }`}
+                              >
+                                <div className="flex items-start gap-3">
+                                  <Icon className={`w-5 h-5 flex-shrink-0 mt-0.5 ${isDisabled ? 'text-gray-400' : 'text-[#75619D]'}`} />
+                                  <div>
+                                    <div className={`font-medium text-sm ${
+                                      isDisabled
+                                        ? 'text-gray-400'
+                                        : 'text-gray-900 group-hover:text-[#75619D]'
+                                    }`}>
+                                      {blockType.label}
+                                      {isDisabled && <span className="ml-2 text-xs">(Added)</span>}
+                                    </div>
+                                    <div className="text-xs text-gray-500">{blockType.description}</div>
                                   </div>
-                                  <div className="text-xs text-gray-500">{blockType.description}</div>
                                 </div>
-                              </div>
-                            </motion.button>
-                          );
-                        })}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* AI Suggestions */}
-              {suggestions.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
-                    Suggested for this event
-                  </p>
-                  {suggestions.map((suggestion, index) => (
-                    <div
-                      key={index}
-                      draggable
-                      onDragStart={(e) => onDragStart(e, suggestion)}
-                      onDrag={onDrag}
-                      onDragEnd={onDragEnd}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        onSuggestionClick(suggestion);
-                      }}
-                      className="w-full p-3 bg-gray-50 hover:bg-[#75619D]/5 border border-gray-200 hover:border-[#75619D] rounded-lg text-left transition-all group cursor-grab active:cursor-grabbing"
-                    >
-                      <div className="flex items-start justify-between mb-1">
-                        <h5 className="text-sm font-semibold text-gray-900 group-hover:text-[#75619D] transition-colors">
-                          {suggestion.title}
-                        </h5>
-                        <span className="text-[10px] px-2 py-0.5 bg-white border border-gray-200 text-gray-600 rounded-full">
-                          {suggestion.blockType}
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-600">{suggestion.reason}</p>
+                              </motion.button>
+                            );
+                          })}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                     </div>
-                  ))}
-                </div>
-              )}
-              {/* end sidebar content */}
-            </>
-          )}
-        </>
-      )}
-    </aside>
+                  </>
+                )}
+              </div>
+            )}
+          </aside>
+    </>
   );
 }

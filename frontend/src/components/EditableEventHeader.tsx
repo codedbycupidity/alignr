@@ -19,6 +19,7 @@ interface EditableEventHeaderProps {
   onStartEdit: () => void;
   onKeyDown: (e: React.KeyboardEvent) => void;
   onDeleteFixedTimeBlock?: () => void;
+  onEditFixedTimeBlock?: () => void;
   onDescriptionSave?: (description: string) => void;
 }
 
@@ -38,6 +39,7 @@ export default function EditableEventHeader({
   onStartEdit,
   onKeyDown,
   onDeleteFixedTimeBlock,
+  onEditFixedTimeBlock,
   onDescriptionSave
 }: EditableEventHeaderProps) {
   const [editingDescription, setEditingDescription] = useState(false);
@@ -282,19 +284,15 @@ export default function EditableEventHeader({
             <span className="text-gray-400">•</span>
             <Globe className="w-4 h-4 text-[#75619D]" />
             <span className="text-xs">{fixedTimeBlock.content.fixedTimezone?.replace('_', ' ')}</span>
-            {isOrganizer && onDeleteFixedTimeBlock && (
+            {isOrganizer && (
               <>
                 <span className="text-gray-400">•</span>
                 <button
-                  onClick={() => {
-                    if (window.confirm('Are you sure you want to delete the fixed date/time?')) {
-                      onDeleteFixedTimeBlock();
-                    }
-                  }}
+                  onClick={() => onEditFixedTimeBlock && onEditFixedTimeBlock()}
                   className="p-0.5 hover:bg-gray-200 rounded transition-colors"
-                  title="Delete fixed date/time"
+                  title="Edit fixed date/time"
                 >
-                  <X className="w-3.5 h-3.5 text-gray-500 hover:text-gray-700" />
+                  <Edit2 className="w-3.5 h-3.5 text-gray-500 hover:text-gray-700" />
                 </button>
               </>
             )}

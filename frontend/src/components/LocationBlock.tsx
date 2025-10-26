@@ -313,23 +313,23 @@ export default function LocationBlock({
   };
 
   return (
-    <div className="p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
-      <div className="flex items-center space-x-2 mb-4">
+    <div className="p-3 bg-white border border-gray-200 rounded-xl shadow-sm">
+      <div className="flex items-center space-x-2 mb-3">
         <MapPin className="w-5 h-5 text-[#75619D]" strokeWidth={2} />
-        <h3 className="text-lg font-semibold text-[#1E1E2F]">Location Options</h3>
+        <h3 className="text-lg font-semibold text-[#1E1E2F]">{allowParticipantSuggestions ? 'Location Vote' : 'Fixed Location'}</h3>
       </div>
 
       {/* Location options list */}
-      <div className="space-y-2 mb-4">
+      <div className="space-y-2 mb-3">
         {locationOptions.length === 0 ? (
-          <p className="text-sm text-gray-500 text-center py-4">
+          <p className="text-sm text-gray-500 text-center py-3">
             No locations added yet. Add some options below!
           </p>
         ) : (
           locationOptions.map(option => (
             <div
               key={option.id}
-              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+              className="flex items-center justify-between p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
             >
               <div className="flex-1">
                 <div className="flex items-start gap-2">
@@ -353,7 +353,7 @@ export default function LocationBlock({
                 </div>
               </div>
 
-              <div className="flex-shrink-0 ml-4">
+              <div className="flex-shrink-0 ml-3">
                 <div className="flex items-center space-x-2">
                   <div className="relative group">
                     <button

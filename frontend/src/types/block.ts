@@ -4,7 +4,7 @@ import { Timestamp } from 'firebase/firestore';
 // BLOCK BASE TYPES
 // ========================================
 
-export type BlockType = 'time' | 'location' | 'task' | 'note' | 'budget';
+export type BlockType = 'time' | 'location' | 'task' | 'note' | 'budget' | 'rsvp';
 
 export interface BlockLayout {
   x: number; // Grid column position (0-11)
@@ -17,7 +17,7 @@ export interface Block {
   id: string;
   type: BlockType;
   title?: string;
-  content: TimeBlockContent | LocationBlockContent | TaskBlockContent | NoteBlockContent | BudgetBlockContent;
+  content: TimeBlockContent | LocationBlockContent | TaskBlockContent | NoteBlockContent | BudgetBlockContent | RSVPBlockContent;
   order: number;
   author: string;
   layout: BlockLayout; // Position and size on canvas
@@ -166,4 +166,17 @@ export interface BudgetResponse {
 export interface BudgetBlock extends Block {
   type: 'budget';
   content: BudgetBlockContent;
+}
+
+// ========================================
+// RSVP BLOCK
+// ========================================
+
+export interface RSVPBlockContent {
+  // Empty for now - participants are automatically fetched from the event
+}
+
+export interface RSVPBlock extends Block {
+  type: 'rsvp';
+  content: RSVPBlockContent;
 }

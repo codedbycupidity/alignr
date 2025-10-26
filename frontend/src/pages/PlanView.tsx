@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { getEvent, getBlocks, addBlock, updateEvent, updateBlock, deleteBlock, getParticipants, finalizeEvent } from '../services/events';
+import { getEvent, getBlocks, addBlock, updateEvent, updateBlock, deleteBlock, getParticipants, finalizeEvent, removeParticipant, addParticipant } from '../services/events';
 import { suggestBlocks, type BlockSuggestion } from '../services/gemini';
 import type { EventData } from '../services/events';
 import type { Block, TimeBlock, TimeBlockContent, BlockLayout } from '../types/block';
@@ -33,6 +33,7 @@ export default function PlanView() {
   const [isDragging, setIsDragging] = useState(false);
   const [participantId, setParticipantId] = useState<string | null>(null);
   const [participantCount, setParticipantCount] = useState(0);
+  const [participants, setParticipants] = useState<Array<{ id: string; name: string }>>([]);
   const [showTaskSuggestionsModal, setShowTaskSuggestionsModal] = useState(false);
   const [addingTaskBlock, setAddingTaskBlock] = useState(false);
 
@@ -78,6 +79,7 @@ export default function PlanView() {
 
         setBlocks(blocksData);
         setParticipantCount(participantsData.length);
+        setParticipants(participantsData.map(p => ({ id: p.id, name: p.name })));
         console.log('Loaded blocks:', blocksData);
         console.log('Loaded participants:', participantsData.length);
       } catch (error) {
@@ -490,6 +492,23 @@ export default function PlanView() {
                 await addBlock(id!, newBlock);
                 const updatedBlocks = await getBlocks(id!);
                 setBlocks(updatedBlocks);
+              } else if (blockType === 'rsvp') {
+                // Add RSVP block
+                const newBlock = {
+                  type: 'rsvp' as const,
+                  content: {},
+                  layout: {
+                    x: 0,
+                    y: blocks.length * 2,
+                    w: 4,
+                    h: 4
+                  },
+                  order: blocks.length,
+                  author: user?.id || participantId || 'anonymous'
+                };
+                await addBlock(id!, newBlock);
+                const updatedBlocks = await getBlocks(id!);
+                setBlocks(updatedBlocks);
               } else {
                 // TODO: Handle other block types
                 console.log('Add block type:', blockType);
@@ -555,6 +574,9 @@ export default function PlanView() {
               blocks={canvasBlocks}
               isOrganizer={user?.id === event?.organizerId}
               currentUserId={user?.id || participantId || undefined}
+              eventId={id}
+              organizerId={event?.organizerId}
+              participants={participants}
               onLayoutChange={handleLayoutChange}
               onBlockUpdate={async (blockId, updates) => {
                 if (!id) return;
@@ -575,6 +597,45 @@ export default function PlanView() {
                 // Reload blocks
                 const updatedBlocks = await getBlocks(id);
                 setBlocks(updatedBlocks);
+              }}
+              onRemoveParticipant={async (participantId) => {
+                if (!id) return;
+
+                try {
+                  await removeParticipant(id, participantId);
+
+                  // Reload participants
+                  const updatedParticipants = await getParticipants(id);
+                  setParticipantCount(updatedParticipants.length);
+                  setParticipants(updatedParticipants.map(p => ({ id: p.id, name: p.name })));
+
+                  // Reload blocks to update participant lists in blocks
+                  const updatedBlocks = await getBlocks(id);
+                  setBlocks(updatedBlocks);
+                } catch (error) {
+                  console.error('Error removing participant:', error);
+                  alert('Failed to remove participant. Please try again.');
+                }
+              }}
+              onAddParticipant={async (name: string) => {
+                if (!id) return;
+
+                try {
+                  // Add participant to event
+                  await addParticipant(id, name);
+
+                  // Reload participants
+                  const updatedParticipants = await getParticipants(id);
+                  setParticipantCount(updatedParticipants.length);
+                  setParticipants(updatedParticipants.map(p => ({ id: p.id, name: p.name })));
+
+                  // Reload blocks to update participant lists in blocks
+                  const updatedBlocks = await getBlocks(id);
+                  setBlocks(updatedBlocks);
+                } catch (error) {
+                  console.error('Error adding participant:', error);
+                  alert('Failed to add participant. Please try again.');
+                }
               }}
               onSelectTimeSlot={async (date, startTime, endTime) => {
                 if (!id) return;

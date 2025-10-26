@@ -2,26 +2,37 @@ import { useCallback } from 'react';
 import GridLayout, { Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import { Timestamp } from 'firebase/firestore';
-import type { Block, TimeBlock, LocationBlock as LocationBlockType, BudgetBlock as BudgetBlockType, TaskBlock as TaskBlockType, NoteBlock as NoteBlockType, BlockLayout } from '../types/block';
+import type { Block, TimeBlock, LocationBlock as LocationBlockType, BudgetBlock as BudgetBlockType, TaskBlock as TaskBlockType, NoteBlock as NoteBlockType, RSVPBlock as RSVPBlockType, BlockLayout } from '../types/block';
 import AvailabilityHeatmap from './AvailabilityHeatmap';
 import LocationBlock from './LocationBlock';
 import BudgetBlock from './BudgetBlock';
 import TaskBlock from './TaskBlock';
 import NoteBlock from './NoteBlock';
+import RSVPBlock from './RSVPBlock';
 import FixedDateTimeDisplay from './FixedDateTimeDisplay';
 import { GripVertical, X } from 'lucide-react';
+
+interface Participant {
+  id: string;
+  name: string;
+}
 
 interface EventCanvasProps {
   blocks: Block[];
   isOrganizer: boolean;
   currentUserId?: string;
+  eventId?: string;
+  organizerId?: string;
+  participants?: Participant[];
   onLayoutChange?: (blockId: string, layout: BlockLayout) => void;
   onBlockUpdate?: (blockId: string, updates: Partial<Block>) => void;
   onBlockDelete?: (blockId: string) => void;
   onSelectTimeSlot?: (date: string, startTime: string, endTime: string) => void;
+  onRemoveParticipant?: (participantId: string) => void;
+  onAddParticipant?: (name: string) => void;
 }
 
-export default function EventCanvas({ blocks, isOrganizer, currentUserId, onLayoutChange, onBlockUpdate, onBlockDelete, onSelectTimeSlot }: EventCanvasProps) {
+export default function EventCanvas({ blocks, isOrganizer, currentUserId, eventId, organizerId, participants = [], onLayoutChange, onBlockUpdate, onBlockDelete, onSelectTimeSlot, onRemoveParticipant, onAddParticipant }: EventCanvasProps) {
   // Build participant name map from TimeBlock availability
   const participantNames = new Map<string, string>();
   blocks.forEach(block => {
@@ -140,6 +151,7 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, onLayo
             options={lb.content.options}
             editable={isOrganizer}
             currentUserId={currentUserId}
+            organizerId={organizerId}
             participantNames={participantNames}
             allowParticipantSuggestions={lb.content.allowParticipantSuggestions ?? true}
             onOptionsChange={(options) => {
@@ -258,11 +270,31 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, onLayo
       );
     }
 
+    // Render RSVPBlock
+    if (block.type === 'rsvp') {
+      // Filter out organizer from participants list
+      const filteredParticipants = organizerId
+        ? participants.filter(p => p.id !== organizerId)
+        : participants;
+
+      return (
+        <div className="h-full overflow-auto">
+          <RSVPBlock
+            participants={filteredParticipants}
+            currentUserId={currentUserId}
+            isOrganizer={isOrganizer}
+            onRemoveParticipant={onRemoveParticipant}
+            onAddParticipant={onAddParticipant}
+          />
+        </div>
+      );
+    }
+
     // Placeholder for other block types
     return (
       <div className="h-full flex flex-col">
         <div className="text-sm font-medium text-gray-700">
-          {block.type.toUpperCase()} BLOCK
+          {String(block.type).toUpperCase()} BLOCK
         </div>
         <div className="text-xs text-gray-500 mt-1">
           {block.title || 'Untitled'}

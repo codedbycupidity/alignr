@@ -7,6 +7,7 @@ interface LocationBlockProps {
   options: LocationOption[];
   editable?: boolean;
   currentUserId?: string;
+  organizerId?: string;
   participantNames?: Map<string, string>; // Map of participantId -> participantName
   allowParticipantSuggestions?: boolean;
   onOptionsChange?: (options: LocationOption[]) => void;
@@ -24,6 +25,7 @@ export default function LocationBlock({
   options,
   editable = true,
   currentUserId,
+  organizerId,
   participantNames,
   allowParticipantSuggestions = true,
   onOptionsChange,
@@ -294,6 +296,8 @@ export default function LocationBlock({
 
   const handleVote = (optionId: string) => {
     if (!currentUserId) return;
+    // Prevent organizer from voting
+    if (organizerId && currentUserId === organizerId) return;
 
     const updatedOptions = locationOptions.map(opt => {
       if (opt.id === optionId) {
@@ -361,9 +365,11 @@ export default function LocationBlock({
                       className={`flex items-center space-x-1 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                         currentUserId && option.votes.includes(currentUserId)
                           ? 'bg-[#75619D] text-white'
+                          : organizerId && currentUserId === organizerId
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                           : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                       }`}
-                      disabled={!currentUserId}
+                      disabled={!currentUserId || (organizerId && currentUserId === organizerId)}
                     >
                       <ThumbsUp className="w-3 h-3" />
                       <span>{option.votes.length}</span>

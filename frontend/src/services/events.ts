@@ -226,6 +226,98 @@ export function verifyParticipantPassword(
   return participant.password === providedPassword;
 }
 
+// Remove participant from event and cascade delete all their data
+export async function removeParticipant(
+  eventId: string,
+  participantId: string
+): Promise<void> {
+  const eventRef = doc(db, 'events', eventId);
+
+  // Get all blocks to clean up participant data
+  const blocksRef = collection(eventRef, 'blocks');
+  const blocksSnapshot = await getDocs(blocksRef);
+
+  const blockUpdates: Promise<void>[] = [];
+
+  blocksSnapshot.forEach((blockDoc) => {
+    const block = blockDoc.data();
+    let needsUpdate = false;
+    const updates: any = {};
+
+    // Remove from TimeBlock availability
+    if (block.type === 'time' && block.content?.availability) {
+      const filteredAvailability = block.content.availability.filter(
+        (a: any) => a.participantId !== participantId
+      );
+      if (filteredAvailability.length !== block.content.availability.length) {
+        updates['content.availability'] = filteredAvailability;
+        needsUpdate = true;
+      }
+    }
+
+    // Remove from TaskBlock claims
+    if (block.type === 'task' && block.content?.tasks) {
+      const updatedTasks = block.content.tasks.map((task: any) => {
+        if (task.claimedBy === participantId) {
+          return { ...task, claimedBy: undefined };
+        }
+        return task;
+      });
+      if (JSON.stringify(updatedTasks) !== JSON.stringify(block.content.tasks)) {
+        updates['content.tasks'] = updatedTasks;
+        needsUpdate = true;
+      }
+    }
+
+    // Remove from LocationBlock votes
+    if (block.type === 'location' && block.content?.options) {
+      const updatedOptions = block.content.options.map((option: any) => {
+        if (option.votes && option.votes.includes(participantId)) {
+          return {
+            ...option,
+            votes: option.votes.filter((id: string) => id !== participantId)
+          };
+        }
+        return option;
+      });
+      if (JSON.stringify(updatedOptions) !== JSON.stringify(block.content.options)) {
+        updates['content.options'] = updatedOptions;
+        needsUpdate = true;
+      }
+    }
+
+    // Remove from BudgetBlock responses
+    if (block.type === 'budget' && block.content?.responses) {
+      const filteredResponses = block.content.responses.filter(
+        (r: any) => r.participantId !== participantId
+      );
+      if (filteredResponses.length !== block.content.responses.length) {
+        updates['content.responses'] = filteredResponses;
+        needsUpdate = true;
+      }
+    }
+
+    // Remove from NoteBlock likes
+    if (block.type === 'note' && block.content?.likes) {
+      const filteredLikes = block.content.likes.filter(
+        (id: string) => id !== participantId
+      );
+      if (filteredLikes.length !== block.content.likes.length) {
+        updates['content.likes'] = filteredLikes;
+        needsUpdate = true;
+      }
+    }
+
+    if (needsUpdate) {
+      blockUpdates.push(updateDoc(blockDoc.ref, updates));
+    }
+  });
+
+  // Execute all block updates and participant deletion in parallel
+  const participantRef = doc(collection(eventRef, 'participants'), participantId);
+  await Promise.all([...blockUpdates, deleteDoc(participantRef)]);
+}
+
 // Add block to event
 export async function addBlock(
   eventId: string,

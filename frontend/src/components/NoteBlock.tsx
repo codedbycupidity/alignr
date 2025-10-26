@@ -261,18 +261,8 @@ export default function NoteBlock({
           className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-[#75619D] hover:text-[#75619D] transition-colors flex items-center justify-center gap-2"
         >
           <Plus className="w-4 h-4" />
-          <span className="text-sm font-medium">Add Comment</span>
+          <span className="text-sm font-medium">Add a comment</span>
         </button>
-      )}
-
-      {/* Empty State */}
-      {!noteText && comments.length === 0 && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
-          <MessageSquare className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-          <p className="text-sm text-gray-600">
-            {isOrganizer ? 'Add a note or let participants comment' : 'Waiting for notes and comments'}
-          </p>
-        </div>
       )}
     </div>
   );

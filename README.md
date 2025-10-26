@@ -11,23 +11,35 @@ The AI-powered, interactive planning canvas that replaces group chat chaos with 
 ## 🎯 Key Features
 
 ### Interactive Block System
-- **🕒 Time Options Block** — Add or suggest times, vote on availability
+- **🕒 Time Block** — Multiple modes:
+  - **Availability tracking** (When2Meet style) — Visual heatmap showing when everyone's free, supports specific dates or days of week
+  - **Fixed date/time** — Organizer sets a specific date and time
+  - Click any time slot to set as event time
 - **📍 Location Block** — Suggest venues with Google Maps integration, vote on locations
-- **📋 Task/Bring List Block** — Collaborative checklist where participants claim items
-- **📝 Notes Block** — Shared context, reminders, and inline comments
+- **📋 Task Block** — Collaborative checklist where participants claim items
+- **📝 Notes Block** — Shared context with comments and likes
+- **💰 Budget Block** — Collect budget preferences from participants anonymously
+- **👥 RSVP Block** — Track attendance with manual name entry for organizers
+- **📊 Poll Block** — Quick decisions with single or multiple choice voting
+- **📸 Shared Album Block** — Upload and share event photos (powered by Firebase Storage)
 
 ### Smart AI Integration (Google Gemini 2.0 Flash)
 When you create an event, Gemini analyzes the type and auto-suggests relevant blocks:
-- "Birthday party" → bring-item list, location, RSVP count
-- "Work meeting" → agenda, required attendees, materials
-- "Trip planning" → itinerary, packing list, budget tracker
+- "Birthday party" → RSVP, poll (food preferences), shared album, task list
+- "Work meeting" → time availability, task list (agenda items), notes
+- "Trip planning" → budget tracker, task list (packing), poll (activity choices)
 
-**Powered by Google Gemini 2.0 Flash** for real-time event planning suggestions
+**Powered by Google Gemini 2.0 Flash** for:
+- Event type detection and description generation
+- Smart block suggestions based on event context
+- Task list content suggestions
 
 ### Real-Time Collaboration
-- **Live updates** as participants vote and interact
-- **Auto-summary card** shows current best plan (most popular time/location)
-- **No login required** — participants join with just a display name
+- **Live updates** — Firestore real-time sync across all participants
+- **Drag-and-drop canvas** — Organizers can arrange and resize blocks
+- **Role-based permissions** — Organizers can edit settings; participants can vote and contribute
+- **Password protection** — Optional participant password protection for name claiming
+- **No login required** — Participants join with just a display name
 - **One shareable link** per event
 
 ### Universal Calendar Export
@@ -42,26 +54,33 @@ Instantly export finalized plans to personal calendar apps with one click:
 
 ### AI-Powered Analytics (Snowflake Cortex AI)
 Real-time event data syncs to Snowflake for deep analytics powered by **Snowflake Cortex AI**:
-- **Automatic data sync** — Firebase events stream to Snowflake continuously
-- **Participation metrics** — Vote counts, engagement rates, suggestion activity across all events
-- **Pattern recognition** — Analyze popular time slots, locations, and event types from historical data
-- **AI-generated insights** — Snowflake Cortex AI (Mistral-7B) generates natural language summaries
+- **Automatic data sync** — Firebase events stream to Snowflake continuously via background sync script
+- **Event summaries** — AI-generated summaries include poll results, task completion, and top contributors
+- **Collapsible event summary card** — Shows AI-generated insights with participant count and key decisions
+- **Manual and automatic generation** — Summaries can be manually refreshed or auto-generated on event finalization
+- **AI-generated insights** — Snowflake Cortex AI (Mistral-7B) generates natural language summaries from event data
 
 **Hybrid AI Stack:**
-- **Google Gemini** → Real-time event planning suggestions (event type detection, block suggestions)
-- **Snowflake Cortex AI** → Historical analytics and insights from aggregated event data
+- **Google Gemini 2.0 Flash** → Real-time event planning (type detection, block suggestions, descriptions)
+- **Snowflake Cortex AI (Mistral-7B)** → Historical analytics and event summaries from aggregated data
 
-Example insight: *"8 people participated across 3 time slots. Friday at 7 PM won by 5 votes! Mira added 4 new suggestions — she's the MVP planner. Based on your past 12 events, you typically finalize plans within 45 minutes."*
+Example insight: *"8 people participated! Friday at 7 PM was selected with 5 votes. Poll results: Pizza won (6 votes). Top contributor: Mira (4 suggestions)."*
 
 ## 🛠 Tech Stack
 
 - **Frontend:** React + TypeScript + Vite
 - **Styling:** Tailwind CSS (custom purple/white theme)
-- **Database:** Firebase (Firestore for real-time updates)
+- **UI Libraries:**
+  - react-grid-layout (drag-and-drop canvas)
+  - framer-motion (animations)
+  - lucide-react (icons)
+- **Database:** Firebase Firestore (real-time updates)
+- **Storage:** Firebase Storage (photo uploads with CORS and public read access)
+- **Authentication:** Firebase Auth (anonymous auth for uploads)
+- **Backend Functions:** Firebase Cloud Functions (Node.js)
 - **AI Planning:** Google Gemini 2.0 Flash (event type detection, block suggestions)
 - **AI Analytics:** Snowflake Cortex AI (Mistral-7B for insights generation)
 - **Data Warehouse:** Snowflake (real-time event data sync & analytics)
-- **Calendar APIs:** Google Calendar, Cronofy
 - **Deployment:** Docker + nginx
 
 ## 🎨 Design System
@@ -87,26 +106,65 @@ src/
 
 ## 🗄 Database Schema
 
-### Collections
+### Firebase Collections
 
 ```typescript
 events/
   {eventId}/
     - name: string
+    - description?: string
     - createdAt: timestamp
-    - password?: string (optional)
+    - organizerId: string
+    - organizerName: string
+    - isPublic: boolean
+    - status: 'planning' | 'finalized'
 
     participants/
       {participantId}/
         - name: string
-        - availability: TimeSlot[]
+        - password?: string (hashed)
+        - joinedAt: timestamp
 
     blocks/
       {blockId}/
-        - type: 'time' | 'location' | 'task' | 'note'
-        - content: any
-        - votes: number
+        - type: 'time' | 'location' | 'task' | 'note' | 'budget' | 'rsvp' | 'album' | 'poll'
+        - content: BlockContent (varies by type)
+        - layout: { x, y, w, h }
+        - order: number
         - author: string
+        - createdAt: timestamp
+
+    analytics/
+      summary/
+        - snowflakeInsight: string
+        - syncMethod: 'auto-finalize' | 'manual' | 'scheduled-backfill'
+        - generatedAt: timestamp
+```
+
+### Block Content Types
+
+```typescript
+TimeBlockContent: {
+  mode: 'availability' | 'voting' | 'fixed'
+  dateType?: 'specific' | 'days'
+  selectedDates?: string[]  // YYYY-MM-DD
+  selectedDays?: number[]   // 0-6 (Sun-Sat)
+  startTime?: string        // HH:MM
+  endTime?: string
+  availability?: ParticipantAvailability[]
+}
+
+PollBlockContent: {
+  question: string
+  options: PollOption[]
+  allowMultipleVotes: boolean
+  allowParticipantOptions: boolean
+}
+
+AlbumBlockContent: {
+  images: AlbumImage[]
+  allowParticipantUploads: boolean
+}
 ```
 
 ## 🚀 Getting Started
@@ -149,23 +207,27 @@ docker-compose up
 
 ## 🎯 How It Works
 
-1. **Organizer creates event** → Gemini 2.0 Flash analyzes event type and suggests relevant blocks
-2. **Shares link** → Participants join with no login, just a display name
-3. **Collaborative editing** → Everyone votes, suggests options, claims tasks in real-time
-4. **Auto-summary** → "Current Best Plan" card updates live with most popular choices
-5. **Data sync** → Firebase events automatically stream to Snowflake in real-time
-6. **Finalize & export** → Organizer confirms plan, everyone exports to calendars
-7. **Get insights** → Snowflake Cortex AI generates engagement summary and analytics from historical data
+1. **Organizer creates event** → Gemini 2.0 Flash analyzes event name/description and suggests relevant blocks
+2. **Customize canvas** → Organizer drags, resizes, and configures blocks (time tracking, polls, RSVPs, etc.)
+3. **Share link** → Participants join with display name (optional password for name protection)
+4. **Collaborative planning** → Everyone votes, uploads photos, claims tasks, marks availability in real-time
+5. **Visual feedback** → Availability heatmap, poll results, RSVP counts update live
+6. **Set event time** → Click any time slot in heatmap to set as event description
+7. **Data sync** → Firebase events automatically stream to Snowflake in real-time
+8. **Finalize & get insights** → Organizer marks event as finalized, Snowflake Cortex AI generates engagement summary including poll results and top contributors
 
 ## 🏆 Why alignr?
 
-- **Hybrid AI Stack** — Combines Google Gemini for real-time planning with Snowflake Cortex AI for deep analytics
-- **Structure + Freedom** — Modular flexibility with automated coordination
-- **Smart Defaults** — AI suggests what you need based on event type
-- **Real-Time Data Pipeline** — Firebase → Snowflake sync enables historical pattern analysis
-- **Social & Fun** — Participatory, not form-based
-- **Always Useful** — Even without finalizing, you see consensus in real-time
-- **Zero Message Spam** — Keep planning out of the group chat
+- **Hybrid AI Stack** — Combines Google Gemini 2.0 Flash for real-time planning with Snowflake Cortex AI for deep analytics
+- **Visual & Interactive** — Drag-and-drop canvas with customizable block layouts, not rigid forms
+- **Flexible Time Scheduling** — Choose between specific dates or recurring days of the week
+- **Rich Media Support** — Share photos via Firebase Storage with automatic public read access
+- **Smart Defaults** — AI suggests relevant blocks based on event type
+- **Real-Time Data Pipeline** — Firebase → Snowflake sync enables historical pattern analysis and AI insights
+- **Role-Based Permissions** — Organizers control structure, participants can't vote on their own suggestions (prevents bias)
+- **Social & Fun** — Participatory polling, shared albums, collaborative task claiming
+- **Always Useful** — See real-time consensus via heatmaps and vote counts even before finalizing
+- **Zero Message Spam** — Keep planning out of the group chat, one link for everything
 
 ---
 

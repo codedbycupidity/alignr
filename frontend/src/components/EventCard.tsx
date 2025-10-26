@@ -7,9 +7,10 @@ interface EventCardProps {
   participantCount: number;
   onDelete: (eventId: string, eventName: string, e: React.MouseEvent) => void;
   onClick: () => void;
+  onToggleStatus?: (eventId: string, currentStatus: 'draft' | 'active' | 'finalized', e: React.MouseEvent) => void;
 }
 
-export default function EventCard({ event, participantCount, onDelete, onClick }: EventCardProps) {
+export default function EventCard({ event, participantCount, onDelete, onClick, onToggleStatus }: EventCardProps) {
   return (
     <div
       className="px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer"
@@ -24,15 +25,20 @@ export default function EventCard({ event, participantCount, onDelete, onClick }
                 {event.name}
               </h3>
             </div>
-            <span
-              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleStatus?.(event.id, event.status, e);
+              }}
+              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium transition-colors ${
                 event.status === 'finalized'
-                  ? 'bg-gray-100 text-gray-700'
-                  : 'bg-[#BEAEDB]/20 text-[#75619D]'
+                  ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-[#BEAEDB]/20 text-[#75619D] hover:bg-[#BEAEDB]/30'
               }`}
+              title="Click to toggle status"
             >
               {event.status === 'finalized' ? 'Completed' : 'Active'}
-            </span>
+            </button>
           </div>
 
           <div className="flex items-center gap-4 text-xs text-gray-500">
@@ -55,9 +61,6 @@ export default function EventCard({ event, participantCount, onDelete, onClick }
         </div>
 
         <div className="text-right ml-4 hidden sm:block">
-          <p className="text-xs text-gray-400 mb-1">
-            Updated {event.updatedAt?.toDate?.().toLocaleDateString() || 'recently'}
-          </p>
           <div className="flex items-center gap-3 justify-end">
             <Link
               to={`/event/${event.id}`}

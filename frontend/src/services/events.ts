@@ -287,3 +287,15 @@ export async function finalizeEvent(eventId: string): Promise<void> {
     updatedAt: serverTimestamp()
   });
 }
+
+// Toggle event status (active/draft <-> finalized)
+export async function toggleEventStatus(eventId: string, currentStatus: 'draft' | 'active' | 'finalized'): Promise<void> {
+  const eventRef = doc(db, 'events', eventId);
+  const newStatus = currentStatus === 'finalized' ? 'active' : 'finalized';
+
+  await updateDoc(eventRef, {
+    status: newStatus,
+    ...(newStatus === 'finalized' ? { finalizedAt: serverTimestamp() } : {}),
+    updatedAt: serverTimestamp()
+  });
+}

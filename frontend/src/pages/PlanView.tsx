@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { getEvent, getBlocks, addBlock, updateEvent, updateBlock, deleteBlock, getParticipants } from '../services/events';
+import { getEvent, getBlocks, addBlock, updateEvent, updateBlock, deleteBlock, getParticipants, finalizeEvent } from '../services/events';
 import { suggestBlocks, type BlockSuggestion } from '../services/gemini';
 import type { EventData } from '../services/events';
 import type { Block, TimeBlock, TimeBlockContent, BlockLayout } from '../types/block';
@@ -11,6 +11,8 @@ import TaskSuggestionsModal from '../components/TaskSuggestionsModal';
 import BlockSuggestionsSidebar from '../components/BlockSuggestionsSidebar';
 import EventNavbar from '../components/EventNavbar';
 import EditableEventHeader from '../components/EditableEventHeader';
+import EventSummary from '../components/EventSummary';
+import { shouldFinalizeEvent } from '../utils/eventFinalization';
 
 export default function PlanView() {
   const { id } = useParams();
@@ -87,6 +89,33 @@ export default function PlanView() {
 
     loadEventData();
   }, [id, user]);
+
+  // Auto-finalize event if date has passed
+  useEffect(() => {
+    if (!id || !event || !blocks.length) return;
+
+    // Only auto-finalize if event is not already finalized
+    if (event.status === 'finalized') return;
+
+    // Check if event should be finalized based on date
+    if (shouldFinalizeEvent(blocks)) {
+      console.log('Event date has passed, auto-finalizing...');
+
+      finalizeEvent(id)
+        .then(() => {
+          console.log('Event auto-finalized successfully');
+          // Reload event data to update status
+          getEvent(id).then(updatedEvent => {
+            if (updatedEvent) {
+              setEvent(updatedEvent);
+            }
+          });
+        })
+        .catch(error => {
+          console.error('Error auto-finalizing event:', error);
+        });
+    }
+  }, [id, event, blocks]);
 
   const loadSuggestions = async (eventData: EventData) => {
     setLoadingSuggestions(true);
@@ -211,7 +240,7 @@ export default function PlanView() {
 
     const newBlock: Omit<Block, 'id' | 'createdAt' | 'updatedAt'> = {
       type: 'time',
-      title: 'Find the Best Time',
+      title: 'Group Avaliability',
       content: config,
       order: blocks.length,
       author: user.id,
@@ -484,6 +513,16 @@ export default function PlanView() {
               }
             }}
           />
+
+          {/* Event Summary (AI-generated insight) */}
+          {id && event && (
+            <EventSummary
+              eventId={id}
+              isOrganizer={user?.id === event.organizerId}
+              eventStatus={event.status || 'active'}
+              blockCount={blocks.length}
+            />
+          )}
 
           {/* Event Canvas with Blocks */}
           <div

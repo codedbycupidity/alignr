@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Calendar, Plus, Clock, CheckCircle2, LogOut, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { getUserEvents, getParticipants, deleteEvent } from '../services/events';
+import { getUserEvents, getParticipants, deleteEvent, finalizeEvent, getBlocks, toggleEventStatus } from '../services/events';
 import type { EventData } from '../services/events';
 import EventCard from '../components/EventCard';
 import favicon from '../assets/favicon.png';
+import { shouldFinalizeEvent } from '../utils/eventFinalization';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -29,11 +30,32 @@ export default function Dashboard() {
     try {
       setLoading(true);
       const userEvents = await getUserEvents(user.id);
-      setEvents(userEvents);
+
+      // Auto-finalize events whose dates have passed
+      const updatedEvents = await Promise.all(
+        userEvents.map(async (event) => {
+          if (event.status !== 'finalized') {
+            try {
+              const blocks = await getBlocks(event.id);
+              if (shouldFinalizeEvent(blocks)) {
+                console.log(`Auto-finalizing event ${event.id} (${event.name})`);
+                await finalizeEvent(event.id);
+                // Update event status locally
+                return { ...event, status: 'finalized' as const };
+              }
+            } catch (error) {
+              console.error(`Error checking/finalizing event ${event.id}:`, error);
+            }
+          }
+          return event;
+        })
+      );
+
+      setEvents(updatedEvents);
 
       // Load participant counts for each event (excluding organizer)
       const counts: Record<string, number> = {};
-      for (const event of userEvents) {
+      for (const event of updatedEvents) {
         const participants = await getParticipants(event.id);
         // Count only non-organizer participants
         const nonOrganizerCount = participants.filter(p => p.id !== event.organizerId).length;
@@ -66,6 +88,25 @@ export default function Dashboard() {
     } catch (error) {
       console.error('Error deleting event:', error);
       alert('Failed to delete event. Please try again.');
+    }
+  };
+
+  const handleToggleStatus = async (eventId: string, currentStatus: 'draft' | 'active' | 'finalized', e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    try {
+      await toggleEventStatus(eventId, currentStatus);
+      // Update local state immediately for better UX
+      setEvents(prevEvents =>
+        prevEvents.map(event =>
+          event.id === eventId
+            ? { ...event, status: currentStatus === 'finalized' ? 'active' as const : 'finalized' as const }
+            : event
+        )
+      );
+    } catch (error) {
+      console.error('Error toggling event status:', error);
+      alert('Failed to update event status. Please try again.');
     }
   };
 
@@ -215,6 +256,7 @@ export default function Dashboard() {
                   participantCount={participantCounts[event.id] || 0}
                   onDelete={handleDeleteEvent}
                   onClick={() => navigate(`/event/${event.id}`)}
+                  onToggleStatus={handleToggleStatus}
                 />
               ))}
             </div>

@@ -8,3 +8,6 @@ export { suggestBlocks, detectEventType, suggestBlockContent, suggestTasks, gene
 
 // Export Snowflake Cortex AI function
 export { generateEventInsight } from './snowflake';
+
+// Export automatic sync functions
+export { onEventFinalized, dailyInsightSync, manualInsightSync } from './sync';

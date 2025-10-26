@@ -35,7 +35,7 @@ export async function suggestBlocks(event: EventData): Promise<BlockSuggestion[]
     return [
       {
         blockType: 'time',
-        title: 'Find the Best Time',
+        title: 'Group Avaliability',
         reason: 'Help participants find a time that works for everyone',
         priority: 1
       }

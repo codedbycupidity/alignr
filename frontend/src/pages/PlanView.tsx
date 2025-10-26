@@ -78,7 +78,9 @@ export default function PlanView() {
         }
 
         setBlocks(blocksData);
-        setParticipantCount(participantsData.length);
+        // Count participants excluding organizer
+        const nonOrganizerCount = participantsData.filter(p => p.id !== eventData?.organizerId).length;
+        setParticipantCount(nonOrganizerCount);
         setParticipants(participantsData.map(p => ({ id: p.id, name: p.name })));
         console.log('Loaded blocks:', blocksData);
         console.log('Loaded participants:', participantsData.length);
@@ -606,7 +608,9 @@ export default function PlanView() {
 
                   // Reload participants
                   const updatedParticipants = await getParticipants(id);
-                  setParticipantCount(updatedParticipants.length);
+                  // Count participants excluding organizer
+                  const nonOrganizerCount = updatedParticipants.filter(p => p.id !== event?.organizerId).length;
+                  setParticipantCount(nonOrganizerCount);
                   setParticipants(updatedParticipants.map(p => ({ id: p.id, name: p.name })));
 
                   // Reload blocks to update participant lists in blocks
@@ -626,7 +630,9 @@ export default function PlanView() {
 
                   // Reload participants
                   const updatedParticipants = await getParticipants(id);
-                  setParticipantCount(updatedParticipants.length);
+                  // Count participants excluding organizer
+                  const nonOrganizerCount = updatedParticipants.filter(p => p.id !== event?.organizerId).length;
+                  setParticipantCount(nonOrganizerCount);
                   setParticipants(updatedParticipants.map(p => ({ id: p.id, name: p.name })));
 
                   // Reload blocks to update participant lists in blocks

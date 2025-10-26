@@ -6,6 +6,7 @@ import {
   Clock,
   MapPin,
   CheckSquare,
+  Heart,
 } from "lucide-react";
 import favicon from "../assets/favicon.png";
 
@@ -225,7 +226,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t border-[#E6E4F0] bg-white py-12 mt-auto">
-        <div className="max-w-7xl mx-auto px-6 text-center sm:text-left grid sm:grid-cols-3 gap-10">
+        <div className="max-w-7xl mx-auto px-6 text-center sm:text-left grid sm:grid-cols-2 gap-10">
           <div>
             <div className="flex justify-center sm:justify-start items-center space-x-2.5 mb-4">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
@@ -253,27 +254,11 @@ export default function Home() {
               </li>
             </ul>
           </div>
-
-          <div>
-            <h4 className="font-semibold mb-4 text-[#3F2A52] text-sm">Company</h4>
-            <ul className="space-y-2.5 text-gray-600 text-sm">
-              <li>
-                <a href="#about" className="hover:text-[#75619D] transition-colors">
-                  About
-                </a>
-              </li>
-              <li>
-                <a href="#contact" className="hover:text-[#75619D] transition-colors">
-                  Contact
-                </a>
-              </li>
-            </ul>
-          </div>
         </div>
 
         <div className="border-t border-[#E6E4F0] mt-10 pt-8 text-center">
-          <p className="text-gray-500 text-sm">
-            © 2025 alignr — Built with ❤️ for cleaner group coordination
+          <p className="text-gray-500 text-sm flex items-center justify-center gap-1">
+            © 2025 alignr — Built with <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500" /> for cleaner group coordination
           </p>
         </div>
       </footer>

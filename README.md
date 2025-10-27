@@ -1,6 +1,7 @@
 # alignr
 
 > One link, zero chaos — from idea to done.
+> MVP video: https://youtu.be/BjAprdHMjRM?si=E3l9B1ge9Ee7xtUI
 
 The AI-powered, interactive planning canvas that replaces group chat chaos with collaborative event coordination.
 

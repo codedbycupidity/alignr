@@ -283,7 +283,7 @@ export default function PlanView() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FAFAFB] via-white to-[#F5F3FF]">
+    <div className="min-h-screen bg-gradient-to-br from-[#FAFAFB] via-white to-[#F5F3FF] overflow-x-hidden">
       {/* Top bar */}
       <EventNavbar
         eventId={id!}
@@ -295,7 +295,7 @@ export default function PlanView() {
       />
 
       {/* Main content */}
-      <main className="flex max-w-7xl mx-auto">
+      <main className="flex flex-col lg:flex-row max-w-7xl mx-auto overflow-x-hidden">
         {/* Left Sidebar - Block Suggestions (Organizer only) */}
         {isOrganizer && (
           <BlockSuggestionsSidebar
@@ -311,7 +311,7 @@ export default function PlanView() {
         )}
 
         {/* Main Canvas */}
-        <div className="flex-1 px-6 py-8">
+        <div className="flex-1 px-4 sm:px-6 py-4 sm:py-8">
           {/* Event Header */}
           <EditableEventHeader
             eventName={eventName}
@@ -347,6 +347,7 @@ export default function PlanView() {
               isOrganizer={isOrganizer}
               eventStatus={event.status || 'active'}
               blockCount={blocks.length}
+              summaryHidden={event.summaryHidden}
             />
           )}
 

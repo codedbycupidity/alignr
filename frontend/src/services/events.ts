@@ -25,6 +25,7 @@ export interface EventData {
   createdAt: Timestamp;
   updatedAt: Timestamp;
   status: 'draft' | 'active' | 'finalized';
+  summaryHidden?: boolean;
 }
 
 export interface ParticipantData {

@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../config/firebase';
-import { Sparkles, Loader2, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { Sparkles, Loader2, RefreshCw, ChevronDown, ChevronUp, Eye, EyeOff } from 'lucide-react';
 
 interface EventSummaryProps {
   eventId: string;
   isOrganizer: boolean;
   eventStatus: string;
   blockCount: number;
+  summaryHidden?: boolean;
 }
 
-export default function EventSummary({ eventId, isOrganizer, eventStatus, blockCount }: EventSummaryProps) {
+export default function EventSummary({ eventId, isOrganizer, eventStatus, blockCount, summaryHidden: initialSummaryHidden }: EventSummaryProps) {
   const [insight, setInsight] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -19,6 +20,21 @@ export default function EventSummary({ eventId, isOrganizer, eventStatus, blockC
   const [syncMethod, setSyncMethod] = useState<string | null>(null);
   const [generatedAt, setGeneratedAt] = useState<Date | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [togglingVisibility, setTogglingVisibility] = useState(false);
+  const [summaryHidden, setSummaryHidden] = useState(initialSummaryHidden || false);
+
+  // Listen to event document for summaryHidden changes
+  useEffect(() => {
+    const eventRef = doc(db, 'events', eventId);
+    const unsubscribe = onSnapshot(eventRef, (doc) => {
+      if (doc.exists()) {
+        const data = doc.data();
+        setSummaryHidden(data.summaryHidden || false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [eventId]);
 
   // Load existing insight from Firestore
   useEffect(() => {
@@ -74,6 +90,22 @@ export default function EventSummary({ eventId, isOrganizer, eventStatus, blockC
     }
   };
 
+  // Toggle summary visibility for participants
+  const toggleVisibility = async () => {
+    try {
+      setTogglingVisibility(true);
+      const eventRef = doc(db, 'events', eventId);
+      await updateDoc(eventRef, {
+        summaryHidden: !summaryHidden
+      });
+    } catch (err) {
+      console.error('Error toggling visibility:', err);
+      setError('Failed to update visibility');
+    } finally {
+      setTogglingVisibility(false);
+    }
+  };
+
   // Don't show component if there are 2 or fewer blocks
   if (blockCount <= 2) {
     return null;
@@ -81,6 +113,11 @@ export default function EventSummary({ eventId, isOrganizer, eventStatus, blockC
 
   // Don't show anything if event is not finalized and no insight exists
   if (eventStatus !== 'finalized' && !insight) {
+    return null;
+  }
+
+  // Hide from participants if summaryHidden is true
+  if (summaryHidden && !isOrganizer) {
     return null;
   }
 
@@ -116,6 +153,39 @@ export default function EventSummary({ eventId, isOrganizer, eventStatus, blockC
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Visibility Toggle (Organizer only) */}
+          {isOrganizer && !isCollapsed && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleVisibility();
+              }}
+              disabled={togglingVisibility}
+              className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              title={summaryHidden ? 'Show to participants' : 'Hide from participants'}
+            >
+              {togglingVisibility ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                </>
+              ) : (
+                <>
+                  {summaryHidden ? (
+                    <>
+                      <EyeOff className="w-4 h-4" />
+                      <span className="hidden sm:inline">Hidden from participants</span>
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="w-4 h-4" />
+                      <span className="hidden sm:inline">Visible to participants</span>
+                    </>
+                  )}
+                </>
+              )}
+            </button>
+          )}
+
           {/* Generate/Refresh Button (Organizer only) */}
           {isOrganizer && eventStatus === 'finalized' && !isCollapsed && (
             <button

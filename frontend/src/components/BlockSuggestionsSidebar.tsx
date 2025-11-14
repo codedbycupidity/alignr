@@ -38,7 +38,10 @@ export default function BlockSuggestionsSidebar({
   onAddBlock
 }: BlockSuggestionsSidebarProps) {
   const [showBlockMenu, setShowBlockMenu] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  // Start collapsed on mobile, expanded on desktop
+  const [isCollapsed, setIsCollapsed] = useState(
+    typeof window !== 'undefined' && window.innerWidth < 1024
+  );
 
   // Check if a block type already exists
   const hasBlockType = (type: string) => {
@@ -50,7 +53,7 @@ export default function BlockSuggestionsSidebar({
       {/* Collapse/Expand Button - positioned outside sidebar */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-8 z-50 w-6 h-6 bg-white border border-gray-200 rounded-full shadow-md hover:shadow-lg transition-all flex items-center justify-center hover:bg-gray-50"
+        className="absolute -right-3 top-4 lg:top-8 z-50 w-8 h-8 lg:w-6 lg:h-6 bg-white border border-gray-200 rounded-full shadow-md hover:shadow-lg transition-all flex items-center justify-center hover:bg-gray-50"
         title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       >
         {isCollapsed ? (

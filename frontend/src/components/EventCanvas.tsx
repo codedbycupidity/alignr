@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, useEffect } from 'react';
 import GridLayout, { Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import { Timestamp } from 'firebase/firestore';
@@ -37,6 +37,29 @@ interface EventCanvasProps {
 }
 
 export default function EventCanvas({ blocks, isOrganizer, currentUserId, eventId, organizerId, organizerName, participants = [], onLayoutChange, onBlockUpdate, onBlockDelete, onSelectTimeSlot, onRemoveParticipant, onAddParticipant }: EventCanvasProps) {
+  // Track dragging state to optimize updates
+  const [isDragging, setIsDragging] = useState(false);
+  const layoutUpdateTimeout = useRef<NodeJS.Timeout | null>(null);
+  const pendingUpdates = useRef<Map<string, BlockLayout>>(new Map());
+
+  // Calculate responsive width based on viewport
+  const [canvasWidth, setCanvasWidth] = useState(1000);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const updateWidth = () => {
+      const mobile = window.innerWidth < 768; // Mobile breakpoint
+      // Account for padding: mobile has 16px on each side (sm:px-6 = 24px on larger screens)
+      const padding = mobile ? 32 : 48; // px-4 = 16px each side, sm:px-6 = 24px each side
+      const width = Math.min(1000, window.innerWidth - padding);
+      setCanvasWidth(width);
+      setIsMobile(mobile);
+    };
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
+
   // Build participant name map from participants array and TimeBlock availability
   const participantNames = new Map<string, string>();
 
@@ -58,17 +81,15 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, eventI
   // Convert blocks to react-grid-layout format
   const layout: Layout[] = blocks.map(block => ({
     i: block.id,
-    x: block.layout.x,
+    x: isMobile ? 0 : block.layout.x, // Force to left edge on mobile
     y: block.layout.y,
-    w: block.layout.w,
+    w: isMobile ? 12 : block.layout.w, // Full width on mobile
     h: block.layout.h,
+    minW: 2, // Minimum width
+    minH: 2, // Minimum height
+    maxW: 12, // Maximum width (full canvas width)
     static: !isOrganizer // Only organizer can move blocks
   }));
-
-  // Track dragging state to optimize updates
-  const [isDragging, setIsDragging] = useState(false);
-  const layoutUpdateTimeout = useRef<NodeJS.Timeout | null>(null);
-  const pendingUpdates = useRef<Map<string, BlockLayout>>(new Map());
 
   // Debounced layout change handler
   const handleLayoutChange = useCallback((newLayout: Layout[]) => {
@@ -78,17 +99,21 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, eventI
     newLayout.forEach(item => {
       const block = blocks.find(b => b.id === item.i);
       if (block) {
+        // Ensure block stays within canvas bounds (12 columns)
+        const clampedW = Math.min(item.w, 12);
+        const clampedX = Math.min(item.x, 12 - clampedW);
+
         const hasChanged =
-          block.layout.x !== item.x ||
+          block.layout.x !== clampedX ||
           block.layout.y !== item.y ||
-          block.layout.w !== item.w ||
+          block.layout.w !== clampedW ||
           block.layout.h !== item.h;
 
         if (hasChanged) {
           pendingUpdates.current.set(item.i, {
-            x: item.x,
+            x: clampedX,
             y: item.y,
-            w: item.w,
+            w: clampedW,
             h: item.h
           });
         }
@@ -428,16 +453,16 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, eventI
 
   if (blocks.length === 0) {
     return (
-      <div className="text-center py-16">
-        <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <GripVertical className="w-10 h-10 text-gray-400" />
+      <div className="text-center py-12 sm:py-16 px-4">
+        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+          <GripVertical className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" />
         </div>
-        <h3 className="text-lg font-semibold text-gray-700 mb-2">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-700 mb-2">
           Your canvas is empty
         </h3>
-        <p className="text-sm text-gray-500">
+        <p className="text-xs sm:text-sm text-gray-500">
           {isOrganizer
-            ? 'Drag blocks from the sidebar to build your event page'
+            ? 'Tap "Add a Block" to build your event page'
             : "The organizer hasn't added any blocks yet"}
         </p>
       </div>
@@ -445,13 +470,13 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, eventI
   }
 
   return (
-    <div className="relative max-w-5xl">
+    <div className="relative w-full">
       <GridLayout
         className="layout"
         layout={layout}
         cols={12}
         rowHeight={100}
-        width={1000}
+        width={canvasWidth}
         onLayoutChange={handleLayoutChange}
         onDragStart={handleDragStart}
         onDragStop={handleDragStop}

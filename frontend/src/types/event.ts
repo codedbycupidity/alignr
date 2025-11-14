@@ -11,6 +11,7 @@ export interface Event {
   isPublic: boolean;
   isFinalized: boolean;
   finalizedAt?: Timestamp;
+  summaryHidden?: boolean; // Hide Event Summary from participants
 }
 
 export interface Plan {

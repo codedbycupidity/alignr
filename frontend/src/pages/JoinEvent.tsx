@@ -251,16 +251,16 @@ export default function JoinEvent() {
   const hasAvailabilitySetup = dateType === 'specific' ? eventDates.length > 0 : eventDays.length > 0;
 
   return (
-    <div className="min-h-screen bg-white px-4 py-12">
+    <div className="min-h-screen bg-white px-4 py-6 sm:py-12">
       <div className="w-full max-w-4xl mx-auto">
 
         {/* Logo and brand */}
-        <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center space-x-2 mb-8 group">
-            <div className="w-10 h-10 bg-[#75619D] rounded-md flex items-center justify-center transition-colors">
-              <Calendar className="w-6 h-6 text-white" strokeWidth={2} />
+        <div className="text-center mb-6 sm:mb-8">
+          <Link to="/" className="inline-flex items-center space-x-2 mb-4 sm:mb-8 group">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#75619D] rounded-md flex items-center justify-center transition-colors">
+              <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-white" strokeWidth={2} />
             </div>
-            <span className="text-2xl font-semibold text-[#75619D]">Alignr</span>
+            <span className="text-xl sm:text-2xl font-semibold text-[#75619D]">Alignr</span>
           </Link>
         </div>
 
@@ -269,10 +269,10 @@ export default function JoinEvent() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="bg-white border border-gray-200 rounded-lg overflow-hidden mb-6"
+          className="bg-white border border-gray-200 rounded-lg overflow-hidden mb-4 sm:mb-6"
         >
-          <div className="bg-[#BEAEDB]/10 px-6 py-4 border-b border-gray-200">
-            <h1 className="text-xl font-bold text-gray-900 mb-2">
+          <div className="bg-[#BEAEDB]/10 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+            <h1 className="text-lg sm:text-xl font-bold text-gray-900 mb-1 sm:mb-2">
               You've been invited!
             </h1>
             <p className="text-sm text-gray-600">
@@ -280,28 +280,28 @@ export default function JoinEvent() {
             </p>
           </div>
 
-          <div className="px-6 py-4">
+          <div className="px-4 sm:px-6 py-3 sm:py-4">
             {event?.description && (
-              <p className="text-sm text-gray-600 mb-4">{event.description}</p>
+              <p className="text-sm text-gray-600 mb-3 sm:mb-4">{event.description}</p>
             )}
 
-            <div className="flex items-center justify-between gap-4 mb-4">
-              <div className="flex items-center gap-4 text-xs text-gray-500">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs text-gray-500">
                 {event?.createdAt && (
                   <div className="flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5" />
+                    <Clock className="w-3.5 h-3.5 flex-shrink-0" />
                     <span>Created {event.createdAt.toDate().toLocaleDateString()}</span>
                   </div>
                 )}
                 <div className="flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5" />
-                  <span>Organized by {event?.organizerName || 'Event Host'}</span>
+                  <Users className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="truncate">Organized by {event?.organizerName || 'Event Host'}</span>
                 </div>
               </div>
 
               <Link
                 to={`/event/${eventId}`}
-                className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-[#75619D] hover:bg-[#75619D]/10 border border-[#75619D]/30 hover:border-[#75619D]/50 rounded-md transition-colors"
+                className="flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-medium text-[#75619D] hover:bg-[#75619D]/10 border border-[#75619D]/30 hover:border-[#75619D]/50 rounded-md transition-colors flex-shrink-0"
               >
                 <Eye className="w-3.5 h-3.5" />
                 View Event

@@ -226,6 +226,14 @@ export function useBlockHandlers({
         order: blocks.length,
         author: authorId
       };
+    } else if (blockType === 'potluck') {
+      newBlock = {
+        type: 'potluck' as const,
+        content: { items: [] },
+        layout: { x: 0, y: blocks.length * 2, w: 5, h: 4 },
+        order: blocks.length,
+        author: authorId
+      };
     } else {
       console.log('Unknown block type:', blockType);
       return;

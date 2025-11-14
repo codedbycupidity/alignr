@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import GridLayout, { Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import { Timestamp } from 'firebase/firestore';
-import type { Block, TimeBlock, LocationBlock as LocationBlockType, BudgetBlock as BudgetBlockType, TaskBlock as TaskBlockType, NoteBlock as NoteBlockType, RSVPBlock as RSVPBlockType, AlbumBlock as AlbumBlockType, PollBlock as PollBlockType, BlockLayout } from '../types/block';
+import type { Block, TimeBlock, LocationBlock as LocationBlockType, BudgetBlock as BudgetBlockType, TaskBlock as TaskBlockType, NoteBlock as NoteBlockType, RSVPBlock as RSVPBlockType, AlbumBlock as AlbumBlockType, PollBlock as PollBlockType, PotluckBlock as PotluckBlockType, BlockLayout } from '../types/block';
 import AvailabilityHeatmap from './AvailabilityHeatmap';
 import LocationBlock from './LocationBlock';
 import BudgetBlock from './BudgetBlock';
@@ -11,6 +11,7 @@ import NoteBlock from './NoteBlock';
 import RSVPBlock from './RSVPBlock';
 import SharedAlbumBlock from './SharedAlbumBlock';
 import PollBlock from './PollBlock';
+import PotluckBlock from './PotluckBlock';
 import FixedDateTimeDisplay from './FixedDateTimeDisplay';
 import { GripVertical, X } from 'lucide-react';
 
@@ -25,6 +26,7 @@ interface EventCanvasProps {
   currentUserId?: string;
   eventId?: string;
   organizerId?: string;
+  organizerName?: string;
   participants?: Participant[];
   onLayoutChange?: (blockId: string, layout: BlockLayout) => void;
   onBlockUpdate?: (blockId: string, updates: Partial<Block>) => void;
@@ -34,7 +36,7 @@ interface EventCanvasProps {
   onAddParticipant?: (name: string) => void;
 }
 
-export default function EventCanvas({ blocks, isOrganizer, currentUserId, eventId, organizerId, participants = [], onLayoutChange, onBlockUpdate, onBlockDelete, onSelectTimeSlot, onRemoveParticipant, onAddParticipant }: EventCanvasProps) {
+export default function EventCanvas({ blocks, isOrganizer, currentUserId, eventId, organizerId, organizerName, participants = [], onLayoutChange, onBlockUpdate, onBlockDelete, onSelectTimeSlot, onRemoveParticipant, onAddParticipant }: EventCanvasProps) {
   // Build participant name map from participants array and TimeBlock availability
   const participantNames = new Map<string, string>();
 
@@ -374,6 +376,33 @@ export default function EventCanvas({ blocks, isOrganizer, currentUserId, eventI
             onChange={(question, options, allowMultipleVotes, allowParticipantOptions) => {
               onBlockUpdate?.(block.id, {
                 content: { question, options, allowMultipleVotes, allowParticipantOptions }
+              });
+            }}
+          />
+        </div>
+      );
+    }
+
+    // Render PotluckBlock
+    if (block.type === 'potluck') {
+      const plb = block as PotluckBlockType;
+      const currentUser = participants.find(p => p.id === currentUserId);
+      // If user is organizer, use organizerName; otherwise look up from participants
+      const currentUserName = (isOrganizer && currentUserId === organizerId && organizerName)
+        ? organizerName
+        : (currentUser?.name || participantNames.get(currentUserId || '') || currentUserId || 'Anonymous');
+
+      return (
+        <div className="h-full overflow-auto">
+          <PotluckBlock
+            items={plb.content.items || []}
+            currentUserId={currentUserId}
+            currentUserName={currentUserName}
+            participants={participants}
+            isOrganizer={isOrganizer}
+            onItemsChange={(items) => {
+              onBlockUpdate?.(block.id, {
+                content: { items }
               });
             }}
           />

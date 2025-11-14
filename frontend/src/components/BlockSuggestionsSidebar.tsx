@@ -1,4 +1,4 @@
-import { Sparkles, Loader2, Plus, Clock, MapPin, CheckSquare, FileText, BarChart3, Users, DollarSign, ChevronLeft, ChevronRight, Image } from 'lucide-react';
+import { Sparkles, Loader2, Plus, Clock, MapPin, CheckSquare, FileText, BarChart3, Users, DollarSign, ChevronLeft, ChevronRight, Image, UtensilsCrossed } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { BlockSuggestion } from '../services/gemini';
@@ -13,6 +13,7 @@ const BLOCK_TYPES = [
   { type: 'poll', label: 'Poll', icon: BarChart3, description: 'Quick decisions' },
   { type: 'rsvp', label: 'RSVP', icon: Users, description: 'Track attendance' },
   { type: 'budget', label: 'Budget', icon: DollarSign, description: 'Split expenses' },
+  { type: 'potluck', label: 'Potluck', icon: UtensilsCrossed, description: 'Track food contributions' },
 ];
 
 interface BlockSuggestionsSidebarProps {

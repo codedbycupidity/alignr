@@ -362,6 +362,7 @@ export default function PlanView() {
               currentUserId={currentUserId}
               eventId={id}
               organizerId={event?.organizerId}
+              organizerName={event?.organizerName}
               participants={participants}
               onLayoutChange={handleLayoutChange}
               onBlockUpdate={handleBlockUpdate}

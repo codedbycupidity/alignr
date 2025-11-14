@@ -108,6 +108,76 @@ export default function PotluckBlock({
 
   return (
     <div className="space-y-3">
+      {/* Add Item Button */}
+      {!showAddItem && currentUserId && (
+        <button
+          onClick={() => setShowAddItem(true)}
+          className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-[#75619D] hover:text-[#75619D] transition-colors flex items-center justify-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          <span className="text-sm font-medium">Add Item to Bring</span>
+        </button>
+      )}
+
+      {/* Add Item Form */}
+      {showAddItem && currentUserId && (
+        <div className="bg-white border-2 border-[#75619D] rounded-lg p-3 space-y-2">
+          <input
+            type="text"
+            placeholder="What are you bringing?"
+            value={newItem}
+            onChange={(e) => setNewItem(e.target.value)}
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#75619D] focus:border-transparent"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleAddItem();
+              } else if (e.key === 'Escape') {
+                setShowAddItem(false);
+                setNewItem('');
+                setNewDescription('');
+              }
+            }}
+          />
+          <input
+            type="text"
+            placeholder="Description (optional)"
+            value={newDescription}
+            onChange={(e) => setNewDescription(e.target.value)}
+            className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#75619D] focus:border-transparent"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleAddItem();
+              } else if (e.key === 'Escape') {
+                setShowAddItem(false);
+                setNewItem('');
+                setNewDescription('');
+              }
+            }}
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={handleAddItem}
+              className="flex-1 px-3 py-1.5 bg-[#75619D] text-white text-sm rounded hover:bg-[#624F8A] transition-colors"
+            >
+              Add Item
+            </button>
+            <button
+              onClick={() => {
+                setShowAddItem(false);
+                setNewItem('');
+                setNewDescription('');
+              }}
+              className="px-3 py-1.5 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Items List */}
       {items.length > 0 && (
         <div className="space-y-2">
@@ -211,76 +281,6 @@ export default function PotluckBlock({
             </div>
           ))}
         </div>
-      )}
-
-      {/* Add Item Form */}
-      {showAddItem && currentUserId && (
-        <div className="bg-white border-2 border-[#75619D] rounded-lg p-3 space-y-2">
-          <input
-            type="text"
-            placeholder="What are you bringing?"
-            value={newItem}
-            onChange={(e) => setNewItem(e.target.value)}
-            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#75619D] focus:border-transparent"
-            autoFocus
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleAddItem();
-              } else if (e.key === 'Escape') {
-                setShowAddItem(false);
-                setNewItem('');
-                setNewDescription('');
-              }
-            }}
-          />
-          <input
-            type="text"
-            placeholder="Description (optional)"
-            value={newDescription}
-            onChange={(e) => setNewDescription(e.target.value)}
-            className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#75619D] focus:border-transparent"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleAddItem();
-              } else if (e.key === 'Escape') {
-                setShowAddItem(false);
-                setNewItem('');
-                setNewDescription('');
-              }
-            }}
-          />
-          <div className="flex gap-2">
-            <button
-              onClick={handleAddItem}
-              className="flex-1 px-3 py-1.5 bg-[#75619D] text-white text-sm rounded hover:bg-[#624F8A] transition-colors"
-            >
-              Add Item
-            </button>
-            <button
-              onClick={() => {
-                setShowAddItem(false);
-                setNewItem('');
-                setNewDescription('');
-              }}
-              className="px-3 py-1.5 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Add Item Button */}
-      {!showAddItem && currentUserId && (
-        <button
-          onClick={() => setShowAddItem(true)}
-          className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-[#75619D] hover:text-[#75619D] transition-colors flex items-center justify-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          <span className="text-sm font-medium">Add Item to Bring</span>
-        </button>
       )}
 
       {/* Empty State */}

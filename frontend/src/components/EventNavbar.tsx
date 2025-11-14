@@ -42,11 +42,11 @@ export default function EventNavbar({
         <div className="flex items-center gap-1.5 sm:gap-3">
           <Link
             to={`/join/${eventId}`}
-            className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2.5 bg-[#75619D] text-white hover:bg-[#75619D]/90 rounded-lg transition-all duration-300 text-xs sm:text-sm font-medium shadow-sm hover:shadow-md"
+            className="flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-1.5 sm:py-2.5 bg-[#75619D] text-white hover:bg-[#75619D]/90 rounded-lg transition-all duration-300 text-xs sm:text-sm font-medium shadow-sm hover:shadow-md"
             title="Join Event"
           >
             <Users className="w-4 h-4" strokeWidth={2} />
-            <span className="hidden sm:inline">Join Event</span>
+            <span>Join Event</span>
           </Link>
           <button
             onClick={onCopyLink}

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Trash2, Image as ImageIcon } from 'lucide-react';
+import { Trash2, Image as ImageIcon, Download } from 'lucide-react';
 import { uploadMultipleAlbumImages, deleteAlbumImage } from '../services/storage';
 
 type ImageItem = {
@@ -143,6 +143,25 @@ const SharedAlbumBlock: React.FC<Props> = ({
     }
   };
 
+  const downloadImage = async (img: ImageItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const response = await fetch(img.url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = img.title || `image-${img.id}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error downloading image:', err);
+      setError('Failed to download image');
+    }
+  };
+
   const canUpload = allowUploads || isOrganizer;
 
   return (
@@ -233,16 +252,27 @@ const SharedAlbumBlock: React.FC<Props> = ({
                   alt={img.title || 'image'}
                   className="w-full h-full object-cover"
                 />
-                {/* Delete button for organizers - only shows on hover */}
-                {isOrganizer && (
+                {/* Action buttons - show on hover */}
+                <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {/* Download button - available to everyone */}
                   <button
-                    onClick={(e) => removeImage(img.id, e)}
-                    className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-600"
-                    aria-label="Delete image"
+                    onClick={(e) => downloadImage(img, e)}
+                    className="p-2 bg-[#75619D] text-white rounded-full shadow-lg hover:bg-[#624F8A]"
+                    aria-label="Download image"
                   >
-                    <Trash2 size={16} />
+                    <Download size={16} />
                   </button>
-                )}
+                  {/* Delete button - for organizers or image uploader */}
+                  {(isOrganizer || img.uploadedBy === currentUserName) && (
+                    <button
+                      onClick={(e) => removeImage(img.id, e)}
+                      className="p-2 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600"
+                      aria-label="Delete image"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           ))}
